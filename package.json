@@ -1,0 +1,14 @@
+{
+  "name": "jdpreview",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "简历 × JD 对齐 Agent（离线规则版 MVP）",
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node test/all.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

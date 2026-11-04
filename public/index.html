@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>简历 × JD 对齐 Agent</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎯</text></svg>" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <span class="logo">◎</span>
+        <div>
+          <h1>简历 × JD 对齐 Agent</h1>
+          <p class="tagline">先判断能不能投，再告诉你怎么对齐 —— 每一处改动都能追到原文</p>
+        </div>
+      </div>
+      <div class="topbar-meta">
+        <span class="pill">离线运行</span>
+        <span class="pill">事实一致率一票否决</span>
+      </div>
+    </header>
+
+    <main>
+      <section class="panel input-panel">
+        <div class="field">
+          <label for="jd">目标岗位 JD</label>
+          <textarea id="jd" spellcheck="false" placeholder="把招聘 JD 原文整段粘进来（含任职要求）。没有 JD 原文就没法对齐，也别指望我猜。"></textarea>
+        </div>
+        <div class="field">
+          <label for="resume">原始简历</label>
+          <textarea id="resume" spellcheck="false" placeholder="粘贴简历纯文本。全程只读 —— 改写稿里不会出现这里没有的事实。"></textarea>
+        </div>
+
+        <div class="controls">
+          <div class="control">
+            <label for="strictness">改写强度</label>
+            <select id="strictness">
+              <option value="strict" selected>strict · 只重排，不动字</option>
+              <option value="balanced">balanced · 重排 + 术语对齐</option>
+              <option value="aggressive">aggressive · 再激进些（含技能块重排）</option>
+            </select>
+          </div>
+          <div class="control">
+            <label for="role">目标岗位名（可空）</label>
+            <input id="role" type="text" placeholder="例如：AI 产品经理" />
+          </div>
+          <div class="control">
+            <label for="maxRound">最大校验轮次</label>
+            <input id="maxRound" type="number" min="1" max="5" value="3" />
+          </div>
+          <div class="control actions">
+            <button id="run" class="primary">开始分析 <kbd>Ctrl ↵</kbd></button>
+            <button id="sample" class="ghost">加载示例</button>
+            <button id="trap" class="ghost" title="JD 要 3 年 AI 产品 + 百万 DAU，简历只有售后支持 —— 用来验证它敢不敢编">诱导编造测试</button>
+            <button id="clear" class="ghost">清空</button>
+          </div>
+        </div>
+        <div id="error" class="error" hidden></div>
+        <div id="status" class="status" hidden></div>
+      </section>
+
+      <section id="result" class="panel result-panel" hidden>
+        <div class="verdict-row">
+          <div id="verdict" class="verdict"></div>
+          <div id="verdict-note" class="verdict-note"></div>
+        </div>
+
+        <div id="scores" class="scores"></div>
+
+        <nav class="tabs" role="tablist">
+          <button class="tab active" data-tab="resume-tab">对齐版简历</button>
+          <button class="tab" data-tab="ledger-tab">改动与证据</button>
+          <button class="tab" data-tab="missing-tab">待补清单</button>
+          <button class="tab" data-tab="gate-tab">校验报告</button>
+          <button class="tab" data-tab="jd-tab">JD 解析</button>
+        </nav>
+
+        <div id="resume-tab" class="tab-panel active">
+          <div class="panel-head">
+            <h2>对齐版简历</h2>
+            <button class="ghost small" data-copy="#rewritten">复制</button>
+          </div>
+          <p class="hint" id="impact"></p>
+          <pre id="rewritten" class="resume-out"></pre>
+        </div>
+
+        <div id="ledger-tab" class="tab-panel">
+          <div class="panel-head"><h2>逐条改动说明</h2><span class="hint">事实依据全部来自左侧原简历</span></div>
+          <div id="ledger"></div>
+        </div>
+
+        <div id="missing-tab" class="tab-panel">
+          <div class="panel-head"><h2>待补充清单</h2><button class="ghost small" data-copy="#questions">复制问题</button></div>
+          <p class="hint">这些是 JD 要、简历里没有的东西。我没替你编，也不会替你编。</p>
+          <div id="missing"></div>
+          <div id="questions" class="questions"></div>
+          <div id="irrelevant" class="irrelevant"></div>
+        </div>
+
+        <div id="gate-tab" class="tab-panel">
+          <div class="panel-head"><h2>校验报告</h2><span class="hint" id="gate-summary"></span></div>
+          <div id="gate"></div>
+        </div>
+
+        <div id="jd-tab" class="tab-panel">
+          <div class="panel-head"><h2>JD 解析结果</h2><span class="hint">结构化后的能力清单，下游都按它对齐</span></div>
+          <div id="jdout"></div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <span>MVP v0.1 · 规则引擎离线运行</span>
+      <span>设计底线：缺失不编造，改写必留痕</span>
+    </footer>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>
