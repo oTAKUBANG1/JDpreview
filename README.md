@@ -7,7 +7,9 @@
 ## 快速开始
 
 ```bash
-# 需要 Node.js >= 20，无第三方依赖，不用 npm install
+# 需要 Node.js >= 20
+npm install          # 只装构建期依赖（pdf.js / tesseract.js / puppeteer-core）
+npm run vendor       # 生成 public/vendor/（约 25MB，离线运行时资源，不入库）
 node src/server.js
 # 浏览器打开 http://127.0.0.1:3080
 ```
@@ -15,8 +17,19 @@ node src/server.js
 也可以直接看演示：`http://127.0.0.1:3080/?demo=1`（自动填示例并跑一遍）。
 
 ```bash
-node test/all.js   # 30 个用例
+node test/all.js   # 45 个用例
 ```
+
+## 导入方式
+
+| 输入 | 支持 |
+|---|---|
+| JD | 粘贴文本 / 上传 PDF、DOCX / 粘贴网页链接 / 截图 OCR |
+| 简历 | 粘贴文本 / 上传 PDF、DOCX |
+
+- OCR 与 PDF 全在浏览器本地跑，文件不出机器；OCR 结果会先填进输入框，由人核对再分析。
+- 链接导入有 SSRF 防护；BOSS 直聘这类登录墙页面抓不到，会提示改用截图。
+- 扫描版 PDF 没有文字层，需用截图识别。
 
 ## 流水线
 
@@ -40,28 +53,32 @@ JD 解析 ──► 证据匹配 ──► 对齐改写 ──► 防幻觉闸�
 | 维度 | 计算 | 权重 |
 |---|---|---|
 | 事实一致率 | 通过断言 / 总断言 × 100 | 0.4，**一票否决** |
-| JD 覆盖率 | 有证据的 must 能力项 / must 总数 × 100 | 0.3 |
-| 关键词命中 | 命中关键词 / must 关键词总数 × 100 | 0.2 |
-| 量化程度 | 含数字的证据句 / 证据句总数 × 100 | 0.1 |
+| JD 对齐度 | 已回应 must 权重 / must 总权重 × 100 | 0.4 |
+| 量化程度 | 含数字的证据句 / 证据句总数 × 100 | 0.2 |
 
-结论：事实一致率 < 100 → 不建议投递；must 有缺口或闸门未 PASS → 建议补充后投递；否则可投递。
+结论（按优先级）：硬门槛不满足 → 不建议投递；事实一致率 < 100 → 不建议投递；must 有缺口或闸门未 PASS → 建议补充后投递；否则可投递。
 
 ## 目录
 
 ```
-public/           前端（无构建步骤）
-src/engine/       规则引擎
+public/           前端（无构建步骤）；importers.js 负责 PDF/DOCX/OCR
+public/vendor/    npm run vendor 生成的离线资源（不入库）
+src/engine/       规则引擎（解析/匹配/改写/闸门/硬门槛）
+src/fetcher.js    链接导入 + SSRF 防护
 src/server.js     零依赖 HTTP 服务
 test/             node:test 用例
-docs/             PRD、项目状态、交付说明
-plan/             任务树
+docs/ PRD、项目状态、交付说明
+plan/             任务树与路线图
 log/ test/        实现日志与测试报告
 ```
 
 ## 已知限制
 
 - 中文靠词库匹配，长尾岗位（细分行业/小众工具）会漏，会在 JD 解析里显式暴露，不会静默吞掉。
-- 不做 PDF/Word 解析，只收纯文本。
-- 不做自由改写（LLM 重写句子）——v0.2 接模型后，规则引擎转为确定性闸门。
+- 扫描版 PDF 没有文字层，需走截图 OCR；OCR 只认印刷体，识别结果需人工核对。
+- 登录墙 / 强反爬站点（如 BOSS 直聘）的链接抓不到，会提示改用截图。
+- 不做自由改写（LLM 重写句子）——v0.3 接模型后，规则引擎转为确定性闸门。
+
+细节见 [docs/DELIVER.md](docs/DELIVER.md)、[docs/PRD.md](docs/PRD.md)、[plan/ROADMAP-v0.2.md](plan/ROADMAP-v0.2.md)。
 
 细节见 [docs/DELIVER.md](docs/DELIVER.md)、[docs/PRD.md](docs/PRD.md)。

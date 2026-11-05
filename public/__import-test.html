@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head><meta charset="utf-8" /><meta name="robots" content="noindex" /><title>importers self-test</title></head>
+  <body>
+    <pre id="out">running…</pre>
+    <script type="module">
+      import { pdfToText, imageToText } from '/importers.js';
+      const out = document.getElementById('out');
+      const done = (payload) => {
+        out.textContent = JSON.stringify(payload, null, 2);
+        window.__DONE = true;
+      };
+      (async () => {
+        const started = Date.now();
+        try {
+          const pdfBlob = await (await fetch('/__test/fixture-jd.pdf')).blob();
+          const pdf = await pdfToText(new File([pdfBlob], 'jd.pdf', { type: 'application/pdf' }));
+          const pngBlob = await (await fetch('/__test/fixture-jd.png')).blob();
+          const ocr = await imageToText(new File([pngBlob], 'jd.png', { type: 'image/png' }));
+          done({
+            ms: Date.now() - started,
+            pdf: { chars: pdf.text.length, pages: pdf.pages, head: pdf.text.slice(0, 80) },
+            ocr: { chars: ocr.text.length, confidence: Math.round(ocr.confidence), head: ocr.text.slice(0, 80) },
+          });
+        } catch (err) {
+          done({ error: err?.message ?? String(err), stack: String(err?.stack ?? '').slice(0, 400) });
+        }
+      })();
+    </script>
+  </body>
+</html>

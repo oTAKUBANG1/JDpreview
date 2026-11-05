@@ -121,6 +121,43 @@ textarea:focus, input:focus, select:focus {
 select { appearance: none; cursor: pointer; }
 select option { background: #0a1220; }
 
+/* —— 导入工具条 —— */
+.field-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.file-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12.5px;
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+  white-space: nowrap;
+}
+.file-btn:hover { color: var(--text); border-color: #2a3c5a; }
+
+.url-row { display: inline-flex; align-items: center; gap: 6px; flex: 1 1 260px; min-width: 220px; }
+.url-row input {
+  flex: 1;
+  font-family: var(--sans);
+  font-size: 12.5px;
+  padding: 6px 10px;
+  border-radius: 8px;
+}
+
+.import-status { font-size: 12px; color: var(--dim); }
+.import-status.ok { color: var(--good); }
+.import-status.err { color: #ffb4b4; }
+.import-status.working { color: var(--accent); }
+
 .controls { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; }
 .control { display: flex; flex-direction: column; gap: 6px; min-width: 180px; }
 .control select, .control input[type="number"] { min-width: 220px; }
@@ -330,3 +367,35 @@ footer {
   .control.actions { margin-left: 0; flex-wrap: wrap; }
   .control select, .control input[type="number"] { min-width: 0; width: 100%; }
 }
+
+/* 手机端：单手能用，别出横向滚动 */
+@media (max-width: 640px) {
+  body { font-size: 14px; }
+  .topbar { padding: 16px 14px 10px; gap: 10px; }
+  .topbar-meta { display: none; }
+  h1 { font-size: 17px; }
+  .tagline { font-size: 12px; }
+  main { padding: 0 14px 28px; gap: 16px; }
+  .panel { padding: 16px 14px; }
+  textarea { min-height: 150px; font-size: 13px; }
+  .controls { gap: 10px; }
+  .control { min-width: 0; width: 100%; }
+  .control.actions { width: 100%; display: flex; flex-wrap: wrap; gap: 8px; }
+  .control.actions button { flex: 1 1 calc(50% - 8px); }
+  .control.actions button.primary { flex: 1 1 100%; }
+  .tabs { overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; }
+  .tab { white-space: nowrap; padding: 8px 12px; font-size: 13px; }
+  .scores { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .score-card { padding: 11px 12px; }
+  .score-card .value { font-size: 21px; }
+  .verdict { font-size: 16px; padding: 7px 12px; }
+  .verdict-row { gap: 10px; }
+  .field-tools { gap: 6px; }
+  .url-row { flex: 1 1 100%; }
+  .url-row input { min-width: 0; }
+  table { font-size: 12px; }
+  th, td { padding: 7px 6px; }
+  .resume-out { font-size: 13px; padding: 12px; }
+  footer { padding: 14px; flex-direction: column; gap: 4px; }
+}
+

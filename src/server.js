@@ -6,16 +6,21 @@ import { readFile } from 'node:fs/promises';
 import { extname, join, normalize, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { analyze } from './engine/pipeline.js';
+import { fetchPage } from './fetcher.js';
 import { SAMPLE_JD, SAMPLE_RESUME, TRAP_JD, TRAP_RESUME } from './samples.js';
 
 const ROOT = resolve(fileURLToPath(new URL('../public', import.meta.url)));
 const MIME = {
   '.html': 'text/html; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
+  '.mjs': 'text/javascript; charset=utf-8',
   '.css': 'text/css; charset=utf-8',
   '.json': 'application/json; charset=utf-8',
+  '.wasm': 'application/wasm',
+  '.gz': 'application/gzip',
   '.svg': 'image/svg+xml',
   '.png': 'image/png',
+  '.jpg': 'image/jpeg',
   '.ico': 'image/x-icon',
 };
 const MAX_BODY = 2 * 1024 * 1024;
@@ -68,13 +73,22 @@ export function createApp() {
     const url = new URL(req.url ?? '/', 'http://localhost');
     try {
       if (req.method === 'GET' && url.pathname === '/api/health') {
-        return json(res, 200, { ok: true, version: '0.1.2' });
+        return json(res, 200, { ok: true, version: '0.1.3' });
       }
       if (req.method === 'GET' && url.pathname === '/api/samples') {
         return json(res, 200, {
           normal: { jd: SAMPLE_JD, resume: SAMPLE_RESUME },
           trap: { jd: TRAP_JD, resume: TRAP_RESUME },
         });
+      }
+      if (req.method === 'POST' && url.pathname === '/api/fetch-url') {
+        const body = await readBody(req);
+        try {
+          const data = await fetchPage(String(body.url ?? ''));
+          return json(res, 200, data);
+        } catch (err) {
+          return json(res, 422, { ok: false, error: err.message });
+        }
       }
       if (req.method === 'POST' && url.pathname === '/api/analyze') {
         const body = await readBody(req);

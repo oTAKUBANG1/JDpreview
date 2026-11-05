@@ -1,6 +1,8 @@
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => [...document.querySelectorAll(sel)];
 
+import { fileToText } from './importers.js';
+
 let current = null;
 
 const esc = (s) =>
@@ -259,6 +261,79 @@ function renderJd(jd) {
     </div>
     ${coreRows}`;
 }
+
+// —— 文件 / 链接导入 ——
+function setImportStatus(field, text, kind = '') {
+  const el = document.querySelector(`[data-status="${field}"]`);
+  if (!el) return;
+  el.textContent = text;
+  el.className = `import-status ${kind}`;
+}
+
+async function importFile(field, input) {
+  const file = input.files?.[0];
+  input.value = '';
+  if (!file) return;
+  const box = document.getElementById(field);
+  if (file.size > 20 * 1024 * 1024) {
+    setImportStatus(field, '文件超过 20MB，请压缩后再试', 'err');
+    return;
+  }
+  if (box.value.trim() && !confirm('导入会覆盖当前输入框里的内容，继续？')) return;
+
+  setImportStatus(field, '正在解析文件…', 'working');
+  try {
+    const result = await fileToText(file, (pct, status) => {
+      if (pct != null) setImportStatus(field, `识别中 ${pct}%`, 'working');
+      else if (status) setImportStatus(field, '正在准备识别引擎…', 'working');
+    });
+    box.value = result.text;
+    const hint = result.kind === '图片 OCR' ? '（OCR 结果请先核对再分析）' : '';
+    setImportStatus(field, `已从 ${file.name} 提取 ${result.text.length} 字${hint}`, 'ok');
+  } catch (err) {
+    if (err.message === 'SCANNED_PDF') {
+      setImportStatus(field, '这份 PDF 是扫描件，没有文字层。请改用「截图识别」', 'err');
+    } else {
+      setImportStatus(field, err.message || '解析失败', 'err');
+    }
+  }
+}
+
+async function importUrl(field) {
+  const input = document.querySelector(`[data-url="${field}"]`);
+  const url = input?.value.trim();
+  if (!url) {
+    setImportStatus(field, '先粘贴一个网页链接', 'err');
+    return;
+  }
+  setImportStatus(field, '正在抓取页面…', 'working');
+  try {
+    const res = await fetch('/api/fetch-url', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ url }),
+    });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || '抓取失败');
+    document.getElementById(field).value = data.text;
+    setImportStatus(
+      field,
+      `已抓取${data.title ? `《${data.title}》` : '页面'}，提取 ${data.text.length} 字${data.truncated ? '（内容过长已截断）' : ''}`,
+      'ok',
+    );
+  } catch (err) {
+    setImportStatus(field, err.message || '抓取失败', 'err');
+  }
+}
+
+document.addEventListener('change', (e) => {
+  const el = e.target;
+  if (el.dataset?.file) importFile(el.dataset.file, el);
+});
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-urlgo]');
+  if (btn) importUrl(btn.dataset.urlgo);
+});
 
 // —— 事件 ——
 $('#run').addEventListener('click', run);

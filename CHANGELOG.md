@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.1.3] - 2026-11-05
+
+### Added
+- 文件导入：PDF（pdf.js，逐页按坐标还原换行）与 DOCX（零依赖解 zip + XML 转文本），选择后自动填入输入框。
+- JD 链接导入：`POST /api/fetch-url`，服务端抓取、HTML 转文本、按「岗位职责/任职要求」等锚点截出 JD 段落。
+- 截图 OCR：本地 tesseract.js（chi_sim + eng），带进度提示，结果填入 JD 框供人工核对。
+- 移动端适配：窄屏下输入区、按钮、表格、标签页重新排版。
+- `npm run vendor` 生成离线运行时资源；`scripts/browser-verify.mjs` 跑浏览器端验收并截图。
+
+### Security
+- 链接导入做 SSRF 防护：只放行 http/https，拒绝回环/私网/链路本地地址，重定向逐跳校验，8 秒超时、2MB 上限。
+- 登录墙/反爬站点返回可操作提示（改用截图识别），不抛裸错误码。
+
+### Changed
+- 静态资源增加 `.mjs` / `.wasm` / `.gz` MIME；`public/vendor/` 不入库，由 `npm run vendor` 生成（约 25MB）。
+- 打分卡口径与硬门槛比对（v0.1.2 的行为）同步进 PRD。
+
+### Fixed
+- tesseract ESM 默认导出导致的 `createWorker is not a function`。
+- tesseract 按浏览器能力选择 simd / relaxedsimd / 非 simd 三种核心，vendor 脚本补齐全部变体。
+
 ## [0.1.2] - 2026-11-05
 
 ### Changed

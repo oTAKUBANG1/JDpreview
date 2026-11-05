@@ -84,3 +84,17 @@ test('静态资源路径穿越被挡住', async () => {
     assert.ok([403, 404].includes(res.status));
   });
 });
+
+test('链接导入接口：私网地址返回 422 与可读错误', async () => {
+  await withServer(async (base) => {
+    const res = await fetch(`${base}/api/fetch-url`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ url: 'http://127.0.0.1:3080/api/health' }),
+    });
+    assert.equal(res.status, 422);
+    const data = await res.json();
+    assert.equal(data.ok, false);
+    assert.match(data.error, /内网或本机/);
+  });
+});

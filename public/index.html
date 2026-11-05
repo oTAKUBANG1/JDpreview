@@ -27,10 +27,23 @@
         <div class="field">
           <label for="jd">目标岗位 JD</label>
           <textarea id="jd" spellcheck="false" placeholder="粘贴目标岗位 JD 原文，建议包含岗位职责与任职要求。"></textarea>
+          <div class="field-tools">
+            <label class="file-btn">上传 PDF / DOCX<input type="file" data-file="jd" accept=".pdf,.docx" hidden /></label>
+            <label class="file-btn">截图识别<input type="file" data-image="jd" accept="image/*" hidden /></label>
+            <span class="url-row">
+              <input type="url" data-url="jd" placeholder="或粘贴 JD 网页链接" />
+              <button class="ghost small" data-urlgo="jd">导入链接</button>
+            </span>
+            <span class="import-status" data-status="jd"></span>
+          </div>
         </div>
         <div class="field">
           <label for="resume">原始简历</label>
           <textarea id="resume" spellcheck="false" placeholder="粘贴简历纯文本。分析全程只读原文，不会新增简历里没有的经历。"></textarea>
+          <div class="field-tools">
+            <label class="file-btn">上传 PDF / DOCX<input type="file" data-file="resume" accept=".pdf,.docx" hidden /></label>
+            <span class="import-status" data-status="resume"></span>
+          </div>
         </div>
 
         <div class="controls">

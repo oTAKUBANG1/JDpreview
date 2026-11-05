@@ -4,6 +4,7 @@
 import './parse.test.js';
 import './weights.test.js';
 import './rewrite.test.js';
+import './import.test.js';
 import './gate.test.js';
 import './pipeline.test.js';
 import './server.test.js';

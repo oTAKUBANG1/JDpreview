@@ -2,3 +2,5 @@ node_modules/
 *.log
 .DS_Store
 tmp/
+# 由 `npm run vendor` 生成，不入库（18MB 运行时资源，含 tesseract 核心与语言包）
+public/vendor/
