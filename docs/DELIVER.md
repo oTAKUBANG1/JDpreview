@@ -15,6 +15,7 @@
 | F9 JD 链接导入 | 已实现（0.1.3） | 服务端抓取 + SSRF 防护 + JD 段落截取；登录墙站点给可操作提示 |
 | F10 截图 OCR | 已实现（0.1.3） | 本地 tesseract（chi_sim+eng），进度提示，结果人工核对 |
 | F11 LLM 增强模式 | 未实现（P1） | 见 `plan/ROADMAP-v0.2.md` |
+| F12 JD 岗位池 + 推荐 | 已实现（0.1.4） | 入库去重/脱敏/30 天时效；简历 → 3 个岗位推荐，附命中与缺口；硬门槛不符排除 |
 
 ## 2. 技术说明
 
@@ -22,6 +23,7 @@
 - **前端**：原生 ES Module + CSS，无构建、无框架。
 - **结构**：engine 模块职责单一、纯函数、可注入；`pipeline.analyze(input, deps)` 可离线测循环保护；`public/importers.js` 负责 PDF/DOCX/OCR；`src/fetcher.js` 负责链接抓取。
 - **离线**：`npm run vendor` 把 pdf.js、tesseract 三种 wasm 变体和 chi_sim/eng 语言包复制到 `public/vendor/`（约 25MB，不入库），页面不请求 CDN。
+- **有状态部分**：岗位池用 `node:sqlite`，数据在 `data/jdpool.sqlite`（gitignore）。部署时要挂载持久盘并纳入备份；推荐只读 JD，不存简历。
 
 关键取舍：
 

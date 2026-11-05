@@ -2,10 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { once } from 'node:events';
 import { createApp } from '../src/server.js';
+import { openStore } from '../src/store.js';
+import { parseJD } from '../src/engine/jdParse.js';
 import { SAMPLE_JD, SAMPLE_RESUME } from '../src/samples.js';
 
-async function withServer(fn) {
-  const server = createApp();
+async function withServer(fn, options = {}) {
+  const server = createApp({ store: openStore(':memory:'), ...options });
   server.listen(0, '127.0.0.1');
   await once(server, 'listening');
   const { port } = server.address();
@@ -96,5 +98,61 @@ test('链接导入接口：私网地址返回 422 与可读错误', async () => 
     const data = await res.json();
     assert.equal(data.ok, false);
     assert.match(data.error, /内网或本机/);
+  });
+});
+
+test('分析会自动把 JD 入池，推荐接口能返回它', async () => {
+  const store = openStore(':memory:');
+  await withServer(
+    async (base) => {
+      const analyzed = await fetch(`${base}/api/analyze`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ jd_text: SAMPLE_JD, resume_text: SAMPLE_RESUME }),
+      });
+      assert.equal(analyzed.status, 200);
+      const result = await analyzed.json();
+      assert.ok(result.jd_id > 0, '返回体应带 jd_id');
+
+      const list = await fetch(`${base}/api/jds`);
+      assert.equal((await list.json()).total, 1);
+
+      const rec = await fetch(`${base}/api/recommend`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ resume_text: SAMPLE_RESUME, limit: 3 }),
+      });
+      const data = await rec.json();
+      assert.equal(data.ok, true);
+      assert.equal(data.pool_size, 1);
+      assert.equal(data.items[0].title, 'AI 产品经理');
+    },
+    { store },
+  );
+});
+
+test('关闭入池开关后不落库', async () => {
+  const store = openStore(':memory:');
+  await withServer(
+    async (base) => {
+      await fetch(`${base}/api/analyze`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ jd_text: SAMPLE_JD, resume_text: SAMPLE_RESUME, save_jd: false }),
+      });
+      assert.equal(store.count(), 0);
+    },
+    { store },
+  );
+});
+
+test('推荐接口空简历返回 422', async () => {
+  await withServer(async (base) => {
+    const res = await fetch(`${base}/api/recommend`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ resume_text: '  ' }),
+    });
+    assert.equal(res.status, 422);
   });
 });

@@ -26,6 +26,11 @@ try {
   await desktop.waitForSelector('#result:not([hidden])', { timeout: 30000 });
   await desktop.screenshot({ path: `${OUT}/shot-desktop.png` });
 
+  // 推荐：点一下按钮，等卡片出来再截图
+  await desktop.click('#recBtn');
+  await desktop.waitForSelector('#recList .rec-card', { timeout: 20000 }).catch(() => {});
+  await desktop.screenshot({ path: `${OUT}/shot-recommend.png` });
+
   const mobile = await browser.newPage();
   await mobile.setViewport({ width: 390, height: 844, deviceScaleFactor: 2, isMobile: true });
   await mobile.goto(`${BASE}/?demo=1`, { waitUntil: 'networkidle0', timeout: 60000 });

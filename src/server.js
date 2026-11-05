@@ -7,6 +7,8 @@ import { extname, join, normalize, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { analyze } from './engine/pipeline.js';
 import { fetchPage } from './fetcher.js';
+import { openStore } from './store.js';
+import { recommendJobs } from './recommend.js';
 import { SAMPLE_JD, SAMPLE_RESUME, TRAP_JD, TRAP_RESUME } from './samples.js';
 
 const ROOT = resolve(fileURLToPath(new URL('../public', import.meta.url)));
@@ -68,12 +70,13 @@ async function serveStatic(res, urlPath) {
   }
 }
 
-export function createApp() {
+export function createApp(options = {}) {
+  const store = options.store ?? openStore();
   return createServer(async (req, res) => {
     const url = new URL(req.url ?? '/', 'http://localhost');
     try {
       if (req.method === 'GET' && url.pathname === '/api/health') {
-        return json(res, 200, { ok: true, version: '0.1.3' });
+        return json(res, 200, { ok: true, version: '0.1.4' });
       }
       if (req.method === 'GET' && url.pathname === '/api/samples') {
         return json(res, 200, {
@@ -90,6 +93,27 @@ export function createApp() {
           return json(res, 422, { ok: false, error: err.message });
         }
       }
+      if (req.method === 'GET' && url.pathname === '/api/jds') {
+        const rows = store.listActive({ limit: 20 });
+        return json(res, 200, {
+          ok: true,
+          total: store.count(),
+          items: rows.map((r) => ({
+            id: r.id,
+            title: JSON.parse(r.jd_json).role_summary?.title ?? r.title,
+            last_seen: r.last_seen,
+            paste_count: r.paste_count,
+          })),
+        });
+      }
+      if (req.method === 'POST' && url.pathname === '/api/recommend') {
+        const body = await readBody(req);
+        const resumeText = String(body.resume_text ?? '');
+        if (!resumeText.trim()) return json(res, 422, { ok: false, error: '请先填写简历原文' });
+        const limit = Math.max(1, Math.min(6, Number(body.limit ?? 3)));
+        const result = recommendJobs(store, resumeText, { limit });
+        return json(res, 200, { ok: true, ...result });
+      }
       if (req.method === 'POST' && url.pathname === '/api/analyze') {
         const body = await readBody(req);
         const started = Date.now();
@@ -102,6 +126,14 @@ export function createApp() {
             : 'strict',
           max_round: Number(body.max_round ?? 3),
         });
+        // JD 匿名入池，供其他成员推荐使用；save_jd=false 时完全不落库
+        if (result.ok && body.save_jd !== false) {
+          try {
+            result.jd_id = store.upsertJd({ text: String(body.jd_text ?? ''), jdJson: result.jd_json }).id;
+          } catch {
+            result.jd_id = null;
+          }
+        }
         return json(res, result.ok ? 200 : 422, { ...result, elapsed_ms: Date.now() - started });
       }
       if (req.method === 'GET' || req.method === 'HEAD') {

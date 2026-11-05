@@ -51,6 +51,7 @@ async function run() {
         target_role: $('#role').value,
         strictness: $('#strictness').value,
         max_round: Number($('#maxRound').value) || 3,
+        save_jd: $('#saveJd')?.checked !== false,
       }),
     });
     const data = await res.json();
@@ -335,8 +336,79 @@ document.addEventListener('click', (e) => {
   if (btn) importUrl(btn.dataset.urlgo);
 });
 
+// —— 岗位推荐 ——
+const recCache = new Map();
+
+async function recommend() {
+  clearError();
+  const resume = $('#resume').value;
+  if (!resume.trim()) return showError('先填简历，才能匹配岗位池里的岗位。');
+  const btn = $('#recBtn');
+  btn.disabled = true;
+  const panel = $('#recommend-panel');
+  panel.hidden = false;
+  $('#recNote').textContent = '正在匹配岗位池…';
+  $('#recList').innerHTML = '';
+  try {
+    const res = await fetch('/api/recommend', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ resume_text: resume, limit: 3 }),
+    });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || '推荐失败');
+    renderRecommend(data);
+  } catch (err) {
+    panel.hidden = true;
+    showError(err.message || '推荐失败');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function renderRecommend(data) {
+  recCache.clear();
+  for (const item of data.items) recCache.set(Number(item.id), item);
+  $('#recNote').textContent = [
+    data.note,
+    `岗位池 ${data.pool_size} 条`,
+    data.hard_failed ? `已排除 ${data.hard_failed} 个门槛不符` : '',
+  ]
+    .filter(Boolean)
+    .join(' · ');
+
+  const list = $('#recList');
+  if (!data.items.length) {
+    list.innerHTML = '<p class="empty">池子里还没有够格的岗位。先分析几份 JD，它们会自动进池。</p>';
+    return;
+  }
+  list.innerHTML = data.items
+    .map(
+      (it) => `<div class="rec-card">
+        <div class="match">${it.match}<small>% 匹配</small></div>
+        <h3>${esc(it.title)}</h3>
+        <div class="meta">${it.company ? `${esc(it.company)} · ` : ''}${it.freshness_days === 0 ? '今天还在' : `${it.freshness_days} 天前出现`} · 被贴 ${it.paste_count} 次</div>
+        <div class="why">命中核心 ${it.must_hit}/${it.must_total} 项${it.matched.length ? `：${it.matched.map(esc).join('、')}` : ''}</div>
+        ${it.gaps.length ? `<div class="chips">${it.gaps.map((g) => `<span class="chip major">缺 ${esc(g)}</span>`).join('')}</div>` : ''}
+        <button class="ghost small" data-use-jd="${it.id}">用这份简历分析</button>
+      </div>`,
+    )
+    .join('');
+}
+
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-use-jd]');
+  if (!btn) return;
+  const item = recCache.get(Number(btn.dataset.useJd));
+  if (!item) return;
+  $('#jd').value = item.text;
+  $('#resume').scrollIntoView({ block: 'start', behavior: 'smooth' });
+  run();
+});
+
 // —— 事件 ——
 $('#run').addEventListener('click', run);
+$('#recBtn').addEventListener('click', recommend);
 $('#clear').addEventListener('click', () => {
   $('#jd').value = '';
   $('#resume').value = '';

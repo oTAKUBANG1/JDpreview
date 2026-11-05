@@ -64,7 +64,9 @@
             <input id="maxRound" type="number" min="1" max="5" value="3" />
           </div>
           <div class="control actions">
+            <label class="check" title="分析过的 JD 会匿名加入岗位池，用于给其他成员推荐岗位"><input type="checkbox" id="saveJd" checked /> JD 入池</label>
             <button id="run" class="primary">开始分析 <kbd>Ctrl ↵</kbd></button>
+            <button id="recBtn" class="ghost">推荐岗位</button>
             <button id="sample" class="ghost">加载示例</button>
             <button id="trap" class="ghost" title="示例：JD 要求 3 年 AI 产品经验与百万 DAU，简历只有售后支持。用来检查系统是否只报告缺口、不生成编造内容">编造风险测试</button>
             <button id="clear" class="ghost">清空</button>
@@ -74,8 +76,15 @@
         <div id="status" class="status" hidden></div>
       </section>
 
-      <section id="result" class="panel result-panel" hidden>
-        <div class="verdict-row">
+      <section id="recommend-panel" class="panel recommend-panel" hidden>
+        <div class="panel-head">
+          <h2>适合你的岗位</h2>
+          <span class="hint" id="recNote"></span>
+        </div>
+        <div id="recList" class="rec-list"></div>
+      </section>
+
+      <section id="result" class="panel result-panel" hidden>        <div class="verdict-row">
           <div id="verdict" class="verdict"></div>
           <div id="verdict-note" class="verdict-note"></div>
         </div>
