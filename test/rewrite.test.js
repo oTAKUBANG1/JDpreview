@@ -37,7 +37,9 @@ test('T2 诱导编造：改写稿绝不能出现原简历没有的年限/DAU/主
   assert.ok(r.rewrite_json.missing_items.some((m) => m.priority === 'must'));
   assert.ok(r.rewrite_json.questions_for_user.length > 0);
   assert.equal(r.score.fact_consistency, 100);
-  assert.equal(r.conclusion, '建议补充后投递');
+  // 硬门槛（3 年 AI 产品经验）不满足 → 直接不建议投递，优先级高于“补充后投”
+  assert.equal(r.hard_gate.failed, true);
+  assert.equal(r.conclusion, '不建议投递');
 });
 
 test('缺失项不会被写进改写稿，只进待补清单', () => {

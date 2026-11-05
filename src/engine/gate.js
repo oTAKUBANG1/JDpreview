@@ -200,8 +200,11 @@ export function gate({ resume_text, jd_json, rewrite_json }) {
   const competencies = jd_json.core_competencies ?? [];
   const evidence = collectEvidence(resume, competencies);
   const mustComps = competencies.filter((c) => c.level === 'must');
-  const covered = mustComps.filter((c) => (evidence.byCompetency.get(c.name) ?? []).length > 0).length;
-  const jdCoverage = mustComps.length ? Math.round((covered / mustComps.length) * 100) : 0;
+  const addressed = mustComps.filter((c) => (evidence.byCompetency.get(c.name) ?? []).length > 0);
+  const mustWeightTotal = mustComps.reduce((sum, c) => sum + (c.weight ?? 1), 0);
+  const addressedWeight = addressed.reduce((sum, c) => sum + (c.weight ?? 1), 0);
+  // 覆盖率按权重加权：JD 强调的核心项占的份量应该比软技能大
+  const jdCoverage = mustWeightTotal ? Math.round((addressedWeight / mustWeightTotal) * 100) : 0;
   const keywordPct = keywordBank.length ? Math.round((keywordHit / keywordBank.length) * 100) : 0;
   const allEvidence = [...evidence.byCompetency.values()].flat();
   const quantPct = allEvidence.length
@@ -211,7 +214,7 @@ export function gate({ resume_text, jd_json, rewrite_json }) {
   let fact = total ? Math.round((passed / total) * 100) : 100;
   if (fatal.length && fact > 95) fact = 95;
 
-  const overall = Math.round(fact * 0.4 + jdCoverage * 0.3 + keywordPct * 0.2 + quantPct * 0.1);
+  const overall = Math.round(fact * 0.4 + jdCoverage * 0.4 + quantPct * 0.2);
 
   return {
     verdict,

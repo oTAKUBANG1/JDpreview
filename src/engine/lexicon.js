@@ -71,7 +71,9 @@ export const COMPETENCIES = [
   { name: '抗压能力', aliases: ['抗压', '承压'], group: '通用' },
   { name: '英语', aliases: ['English', '英文', '英语六级'], group: '通用' },
   { name: '电商', aliases: ['电商平台', '零售', '交易'], group: '行业' },
-  { name: '金融', aliases: ['金融科技', '支付', '风控'], group: '行业' },
+  { name: '金融', aliases: ['金融科技', '银行', '证券'], group: '行业' },
+  { name: '支付', aliases: ['收单', '结算', '支付通道'], group: '行业' },
+  { name: '风控', aliases: ['反欺诈', '风险控制', '风控策略'], group: '行业' },
   { name: '在线教育', aliases: ['教育', '课程'], group: '行业' },
   { name: '医疗', aliases: ['医疗健康', '医药'], group: '行业' },
   { name: '游戏', aliases: ['游戏策划', '游戏运营'], group: '行业' },
@@ -82,10 +84,18 @@ export const COMPETENCIES = [
 ];
 
 // 建索引：term(小写) -> { name, group }
+// 注意：索引键和待匹配文本都要先 compact（去掉中英文之间的空格），
+// 否则「AI 产品」这种带空格的写法会漏掉，JD 里明写的 AI 经验直接消失。
+const compactCache = (s) =>
+  String(s)
+    .toLowerCase()
+    .replace(/(\p{Script=Han})\s+([A-Za-z0-9])/gu, '$1$2')
+    .replace(/([A-Za-z0-9])\s+(\p{Script=Han})/gu, '$1$2');
+
 const TERM_INDEX = new Map();
 for (const item of COMPETENCIES) {
   for (const term of [item.name, ...item.aliases]) {
-    const key = term.toLowerCase();
+    const key = compactCache(term);
     if (!TERM_INDEX.has(key)) {
       TERM_INDEX.set(key, { name: item.name, group: item.group, term });
     }
@@ -94,7 +104,6 @@ for (const item of COMPETENCIES) {
 
 // 长词优先，避免「AI产品」被「产品」抢走、「MySQL」被「SQL」抢走
 const TERMS = [...TERM_INDEX.keys()].sort((a, b) => b.length - a.length);
-
 const LATIN_RE = /[a-z0-9+#.]/i;
 
 function isLatinStart(text, i) {
@@ -106,7 +115,7 @@ function isLatinStart(text, i) {
  */
 export function findCompetencies(text) {
   if (!text) return [];
-  const lower = String(text).toLowerCase();
+  const lower = compactCache(text);
   const taken = [];
   const hits = [];
   for (const term of TERMS) {
@@ -148,9 +157,9 @@ export function termsOf(name) {
 /** 该能力是否在文本中出现（任意写法） */
 export function mentionsCompetency(text, name) {
   if (!text) return false;
-  const lower = String(text).toLowerCase();
+  const lower = compactCache(text);
   return termsOf(name).some((term) => {
-    const t = term.toLowerCase();
+    const t = compactCache(term);
     let from = 0;
     for (;;) {
       const idx = lower.indexOf(t, from);

@@ -85,22 +85,27 @@ function render(data) {
   $('#verdict').textContent = conclusion;
 
   const mustMissing = (rw.missing_items || []).filter((m) => m.priority === 'must').length;
+  const hardFailed = data.hard_gate?.failed;
   const notes = [];
+  if (hardFailed) {
+    const first = (data.hard_gate.items || []).find((i) => i.status === 'fail');
+    notes.push(`硬门槛不满足${first?.note ? `：${first.note}` : ''}`);
+  }
   if (score.fact_consistency < 100) notes.push('事实一致率未达 100，存在无依据改动（已回退或需人工确认）');
   if (mustMissing) notes.push(`${mustMissing} 项 must 级要求在简历里找不到依据，先补再投`);
   if (!notes.length) notes.push('未发现无依据改动；相关证据已按 JD 权重前置，可按需调整措辞');
   if (!meta.converged) notes.push(`校验 ${meta.rounds} 轮未收敛，已强制结束`);
   $('#verdict-note').textContent = notes.join('；');
 
-  const addressed = rw.coverage_self_check?.must_addressed ?? 0;
-  const mustTotal = rw.coverage_self_check?.must_total ?? 0;
+  const cov = rw.coverage_self_check || {};
   $('#scores').innerHTML = [
     scoreCard('事实一致率', score.fact_consistency, '一票否决 · 权重 0.4', true),
-    scoreCard('JD 覆盖率', score.jd_coverage, `must ${addressed}/${mustTotal} · 权重 0.3`),
-    scoreCard('关键词命中', score.keyword_hit, '权重 0.2'),
-    scoreCard('量化程度', score.quantification, '权重 0.1'),
-    scoreCard('综合', score.overall, '四项加权'),
+    scoreCard('JD 对齐度', score.jd_coverage, `按权重 ${cov.must_weight_addressed ?? 0}/${cov.must_weight_total ?? 0} · 权重 0.4`),
+    scoreCard('量化程度', score.quantification, '权重 0.2'),
+    scoreCard('综合', score.overall, '三项加权'),
   ].join('');
+
+  renderHardGate(data.hard_gate);
 
   // 对齐版简历：把 "## 标题" 标成小标题
   const lines = String(rw.rewritten_resume || '').split('\n');
@@ -118,6 +123,27 @@ function render(data) {
   renderJd(jd);
   const hash = location.hash.replace('#', '');
   if (hash && document.getElementById(hash)) tab(hash);
+}
+
+function renderHardGate(hard) {
+  const el = $('#hardgate');
+  const items = hard?.items || [];
+  if (!items.length) {
+    el.hidden = true;
+    return;
+  }
+  el.hidden = false;
+  const chip = (status) =>
+    status === 'pass'
+      ? '<span class="chip explicit">满足</span>'
+      : status === 'fail'
+        ? '<span class="chip fatal">不满足</span>'
+        : '<span class="chip major">待确认</span>';
+  el.innerHTML = `<h3>硬门槛比对（学历 / 年限）</h3>${items
+    .map(
+      (i) => `<div class="row">${chip(i.status)}<span class="text">${esc(i.kind || '门槛')}：${esc(i.text)}</span><span class="note">${esc(i.actual || '')}${i.note ? ` · ${esc(i.note)}` : ''}</span></div>`,
+    )
+    .join('')}`;
 }
 
 function renderLedger(rw) {

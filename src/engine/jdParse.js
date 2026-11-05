@@ -2,7 +2,20 @@
 // 设计原则：宁可少写，不可脑补。拿不到 JD 原文依据的条目一律不产出。
 
 import { normalizeText, splitUnits, clip, detectSection } from './utils.js';
-import { findCompetencies } from './lexicon.js';
+import { findCompetencies, COMPETENCIES } from './lexicon.js';
+
+// 权重来源表：标题、硬性门槛是「不满足就别投」的硬信号；任职要求次之；职责描述最弱。
+// 同一能力项重复出现、或出现在强调句里，再 +1。上限 5 是为了和源规格的 1–5 对齐。
+function weightOf(c) {
+  const hardSource = c.sources.has('title') || c.sources.has('hard');
+  const base = hardSource ? 5 : c.sources.has('requirement') ? 4 : 2;
+  let weight = base;
+  if (c.mentions > 1) weight += 1;
+  if (c.emphasis && base >= 4) weight += 1;
+  if (base < 4 && c.firstIndex >= 0 && c.firstIndex < 3) weight += 1;
+  return Math.max(1, Math.min(5, weight));
+}
+
 
 const NOISE_RE = /(薪资|薪酬|月薪|年薪|薪|五险|公积金|福利|补贴|年终奖|期权|股权|弹性工作|双休|大小周|团建|下午茶|零食|办公地点|工作地点|上班地点|公司地址|地铁|邮箱|简历投递|投递简历|简历请|创始人|融资|天使轮|A轮|B轮|C轮|D轮|上市公司|我们是一家|公司简介|关于我们|团队规模|公司规模|招聘流程|面试流程|年假|带薪|餐补|房补|交通补|节日|生日|体检)/;
 const LABEL_RE = /^(岗位职责|工作职责|职位描述|工作内容|你将负责|你将会|负责内容|任职要求|岗位要求|任职资格|职位要求|我们希望你|希望你|你需要|加分项|优先条件|加分)[:：]?$/;
@@ -71,9 +84,24 @@ export function parseJD(jdText, targetRole = '') {
   const notes = [];
   const hard = [];
   const nice = [];
-  const competencyMap = new Map(); // name -> { name, weight, quotes: [], firstIndex, group }
+  const competencyMap = new Map(); // name -> { name, sources:Set, mentions, quotes, firstIndex, group, emphasis }
+  const role = detectRole(units, targetRole);
   let mode = 'duty';
   let noiseCount = 0;
+
+  // 岗位名称本身就是最强的需求信号：「AI 产品经理」意味着 AI 产品是核心项
+  const titleHits = findCompetencies(`${role.title} ${role.one_line}`.trim());
+  for (const hit of titleHits) {
+    competencyMap.set(hit.name, {
+      name: hit.name,
+      group: hit.group,
+      sources: new Set(['title']),
+      mentions: 1,
+      quotes: [clip(role.one_line || role.title, 60)],
+      firstIndex: -1,
+      emphasis: true,
+    });
+  }
 
   units.forEach((unit, index) => {
     const label = unit.replace(/[:：]\s*$/, '');
@@ -115,15 +143,17 @@ export function parseJD(jdText, targetRole = '') {
       return;
     }
 
-    // 「任职要求」区里的能力项才是真正的门槛；职责区里的按位置加权
-    let weight = mode === 'requirement' ? 5 : index < 3 ? 5 : 4;
-    if (EMPHASIS_RE.test(unit)) weight = Math.min(5, weight + 1);
-    if (!ACTION_RE.test(unit)) weight = Math.max(3, weight - 1);
+    // 权重来源：标题 5 > 硬性门槛 5 > 任职要求 4 > 职责 2；重复出现和强调词再 +1
+    const source = isHard ? 'hard' : mode === 'requirement' ? 'requirement' : 'duty';
+    const emphasis = EMPHASIS_RE.test(unit);
 
     for (const hit of hits) {
       const prev = competencyMap.get(hit.name);
       if (prev) {
-        prev.weight = Math.max(prev.weight, weight);
+        prev.sources.add(source);
+        prev.mentions += 1;
+        prev.emphasis = prev.emphasis || emphasis;
+        if (prev.firstIndex === -1 && index >= 0) prev.firstIndex = index;
         if (prev.quotes.length < 3 && !prev.quotes.includes(clip(unit, 60))) {
           prev.quotes.push(clip(unit, 60));
         }
@@ -131,20 +161,22 @@ export function parseJD(jdText, targetRole = '') {
         competencyMap.set(hit.name, {
           name: hit.name,
           group: hit.group,
-          weight,
+          sources: new Set([source]),
+          mentions: 1,
           quotes: [clip(unit, 60)],
           firstIndex: index,
+          emphasis,
         });
       }
     }
   });
 
-  const competencies = [...competencyMap.values()].sort(
-    (a, b) => b.weight - a.weight || a.firstIndex - b.firstIndex,
-  );
+  const competencies = [...competencyMap.values()]
+    .map((c) => ({ ...c, weight: weightOf(c) }))
+    .sort((a, b) => b.weight - a.weight || a.firstIndex - b.firstIndex);
 
-  // must 级：JD 明确强调（weight 5）的；若 JD 一个都没强调，取前 3，避免覆盖率分母为 0
-  let mustNames = competencies.filter((c) => c.weight >= 5).map((c) => c.name);
+  // must 级：weight ≥ 4（标题/硬门槛/任职要求）；JD 没任何强调时兜底取前 3
+  let mustNames = competencies.filter((c) => c.weight >= 4).map((c) => c.name);
   if (!mustNames.length) mustNames = competencies.slice(0, 3).map((c) => c.name);
 
   const core = competencies.map((c, i) => ({
@@ -167,8 +199,8 @@ export function parseJD(jdText, targetRole = '') {
 
   const alias = {};
   for (const name of keywordMust) {
-    const item = competencies.find((c) => c.name === name);
-    if (item) alias[name] = [];
+    const item = COMPETENCIES.find((c) => c.name === name);
+    if (item) alias[name] = item.aliases.slice(0, 6);
   }
 
   if (noiseCount >= 1) notes.push(`JD 中混入 ${noiseCount} 行薪资/福利/公司介绍等非能力信息，已剔除`);
@@ -181,7 +213,7 @@ export function parseJD(jdText, targetRole = '') {
   }
 
   return {
-    role_summary: detectRole(units, targetRole),
+    role_summary: role,
     hard_requirements: hard,
     core_competencies: core,
     nice_to_have: nice,

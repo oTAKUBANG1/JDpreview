@@ -193,7 +193,21 @@ button.small { padding: 5px 10px; font-size: 12px; }
 .verdict.bad { color: #2b0707; background: linear-gradient(135deg, var(--bad), #ffa0a0); }
 .verdict-note { color: var(--muted); font-size: 13.5px; max-width: 760px; }
 
-.scores { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+.scores { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+
+.hardgate {
+  border: 1px solid var(--line-soft);
+  background: var(--panel-2);
+  border-radius: 12px;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.hardgate h3 { margin: 0 0 2px; font-size: 13px; color: var(--muted); font-weight: 500; }
+.hardgate .row { display: flex; gap: 10px; align-items: baseline; font-size: 13px; }
+.hardgate .row .text { color: var(--text); }
+.hardgate .row .note { color: var(--dim); font-size: 12.5px; }
 
 .score-card {
   border: 1px solid var(--line-soft);

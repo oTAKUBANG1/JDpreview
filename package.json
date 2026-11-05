@@ -1,6 +1,6 @@
 {
   "name": "jdpreview",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": true,
   "type": "module",
   "description": "简历 × JD 对齐 Agent（离线规则版 MVP）",

@@ -17,7 +17,6 @@ const SAFE_ALIGN = new Map([
   ['AB测试', 'A/B测试'],
   ['AB test', 'A/B测试'],
   ['ABTest', 'A/B测试'],
-  ['SpringBoot', 'Spring'],
   ['K8s', 'Kubernetes'],
   ['k8s', 'Kubernetes'],
   ['golang', 'Go'],
@@ -222,6 +221,10 @@ export function rewriteResume({ jd_json, resume_text, strictness = 'strict', rev
   }
 
   const mustMissing = mustComps.filter((c) => (evidence.byCompetency.get(c.name) ?? []).length === 0);
+  const mustWeightTotal = mustComps.reduce((sum, c) => sum + (c.weight ?? 1), 0);
+  const mustWeightAddressed = mustComps
+    .filter((c) => (evidence.byCompetency.get(c.name) ?? []).length > 0)
+    .reduce((sum, c) => sum + (c.weight ?? 1), 0);
 
   return {
     rewritten_resume,
@@ -232,6 +235,8 @@ export function rewriteResume({ jd_json, resume_text, strictness = 'strict', rev
       must_total: mustComps.length,
       must_addressed: mustComps.length - mustMissing.length,
       must_missing: mustMissing.map((c) => c.name),
+      must_weight_total: mustWeightTotal,
+      must_weight_addressed: mustWeightAddressed,
     },
     revise_applied: revise_instructions.length
       ? revise_instructions.map((i) => `已响应：${i}`)

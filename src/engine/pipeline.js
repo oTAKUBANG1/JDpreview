@@ -5,6 +5,7 @@ import { parseJD } from './jdParse.js';
 import { rewriteResume } from './rewrite.js';
 import { gate } from './gate.js';
 import { parseResume, lineRelevance } from './match.js';
+import { compareHardRequirements } from './hardGate.js';
 
 export const DEFAULT_MAX_ROUND = 3;
 
@@ -100,11 +101,14 @@ export function analyze(input, deps = {}) {
   }
 
   const afterTop3 = topBulletHits(rewrite_json.rewritten_resume ?? '', jd_json.core_competencies ?? []);
+  const hardGate = compareHardRequirements(resumeText, jd_json);
   const mustMissing = (rewrite_json.missing_items ?? []).filter((m) => m.priority === 'must');
   const score = gate_json.score;
 
+  // 结论优先级：硬门槛不满足 > 事实问题 > 能力缺口/校验未过 > 可投
   let conclusion = '可投递';
-  if (score.fact_consistency < 100) conclusion = '不建议投递';
+  if (hardGate.failed) conclusion = '不建议投递';
+  else if (score.fact_consistency < 100) conclusion = '不建议投递';
   else if (mustMissing.length || gate_json.verdict !== 'PASS') conclusion = '建议补充后投递';
 
   return {
@@ -122,6 +126,7 @@ export function analyze(input, deps = {}) {
     gate_json,
     score,
     conclusion,
+    hard_gate: hardGate,
     impact: {
       evidence_rank_before: beforeTop3,
       evidence_rank_after: afterTop3,
