@@ -26,6 +26,11 @@ try {
   await desktop.waitForSelector('#result:not([hidden])', { timeout: 30000 });
   await desktop.screenshot({ path: `${OUT}/shot-desktop.png` });
 
+  // 格式体检
+  await desktop.click('#previewBtn');
+  await desktop.waitForSelector('#previewBody .preview-card', { timeout: 15000 }).catch(() => {});
+  await desktop.screenshot({ path: `${OUT}/shot-preview.png` });
+
   // 档案：生成后截图
   await desktop.click('#profileBtn');
   await desktop.waitForSelector('#profileBody .profile-skill', { timeout: 20000 }).catch(() => {});

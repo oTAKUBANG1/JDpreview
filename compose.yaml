@@ -1,0 +1,11 @@
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    environment:
+      JD_DB: /app/data/jdpool.sqlite
+    volumes:
+      - ./data:/app/data
+    ports:
+      # 只绑本机，由 Caddy 对外；不要直接暴露 0.0.0.0:3080
+      - "127.0.0.1:3080:3080"

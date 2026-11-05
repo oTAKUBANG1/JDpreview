@@ -1,4 +1,6 @@
-# 简历 × JD 对齐 Agent（MVP v0.1）
+# 简历 × JD 对齐 Agent（v1.0 封版）
+
+> 功能已冻结，只修 bug 不加功能。封版说明见 [CHANGELOG](CHANGELOG.md)，部署见 [docs/DEPLOY.md](docs/DEPLOY.md)。
 
 粘一段 JD、一段简历，5 分钟拿到三件事：**这份岗能不能投**、**真实经历怎么往 JD 上对齐**、**JD 要但我没有的是什么、该拿什么话去补**。
 

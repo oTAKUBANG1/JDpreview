@@ -1,0 +1,9 @@
+node_modules
+public/vendor
+data
+tmp
+.git
+test
+log
+*.png
+*.log

@@ -188,6 +188,23 @@ select option { background: #0a1220; }
 .rec-card .chips { display: flex; flex-wrap: wrap; gap: 5px; }
 .rec-card button { margin-top: auto; align-self: flex-start; }
 
+/* —— 格式体检 —— */
+.preview-body { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+.preview-card {
+  border: 1px solid var(--line-soft);
+  background: var(--panel-2);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.preview-card h3 { margin: 0; font-size: 15px; }
+.preview-card .meta { color: var(--dim); font-size: 12px; display: flex; gap: 8px; flex-wrap: wrap; }
+.preview-card .warns { margin: 0; padding-left: 16px; color: #ffd98a; font-size: 12px; line-height: 1.7; }
+.preview-card .chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.preview-card button { margin-top: auto; align-self: flex-start; }
+
 /* —— 用户档案 —— */
 .profile-body { display: flex; flex-direction: column; gap: 14px; }
 .profile-kv { display: flex; flex-wrap: wrap; gap: 8px; }

@@ -1,0 +1,28 @@
+# 把域名换成你的；证书由 Caddy 自动申请（Let's Encrypt）
+jd.example.com {
+	encode zstd gzip
+
+	# 先别裸奔：生成口令哈希后把 me 那行换成自己的
+	#   docker run --rm caddy:2 caddy hash-password --plaintext '你的密码'
+	basic_auth {
+		me $2a$14$请替换成你自己的bcrypt哈希
+	}
+
+	reverse_proxy 127.0.0.1:3080 {
+		# 简历/分析请求体不大，限制一下防止被刷
+		transport http {
+			read_timeout 30s
+		}
+	}
+
+	request_body {
+		max_size 2MB
+	}
+
+	header {
+		# 简历属于个人信息，别让中间层缓存页面
+		Cache-Control "no-store"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "no-referrer"
+	}
+}

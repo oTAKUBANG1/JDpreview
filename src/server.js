@@ -10,6 +10,7 @@ import { fetchPage } from './fetcher.js';
 import { openStore } from './store.js';
 import { recommendJobs } from './recommend.js';
 import { buildProfile } from './engine/profile.js';
+import { previewJd } from './preview.js';
 import { SAMPLE_JD, SAMPLE_RESUME, TRAP_JD, TRAP_RESUME } from './samples.js';
 
 const ROOT = resolve(fileURLToPath(new URL('../public', import.meta.url)));
@@ -77,7 +78,7 @@ export function createApp(options = {}) {
     const url = new URL(req.url ?? '/', 'http://localhost');
     try {
       if (req.method === 'GET' && url.pathname === '/api/health') {
-        return json(res, 200, { ok: true, version: '0.1.7' });
+        return json(res, 200, { ok: true, version: '1.0.0' });
       }
       if (req.method === 'GET' && url.pathname === '/api/samples') {
         return json(res, 200, {
@@ -106,6 +107,11 @@ export function createApp(options = {}) {
             paste_count: r.paste_count,
           })),
         });
+      }
+      if (req.method === 'POST' && url.pathname === '/api/preview') {
+        const body = await readBody(req);
+        const result = previewJd(String(body.jd_text ?? ''));
+        return json(res, result.ok ? 200 : 422, result.ok ? result : { ok: false, error: result.error });
       }
       if (req.method === 'POST' && url.pathname === '/api/profile') {
         const body = await readBody(req);
@@ -157,7 +163,8 @@ export function createApp(options = {}) {
 const isMain = process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 if (isMain) {
   const port = Number(process.env.PORT ?? 3080);
-  createApp().listen(port, '127.0.0.1', () => {
-    console.log(`简历 × JD 对齐 Agent 已启动: http://127.0.0.1:${port}`);
+  const host = process.env.HOST ?? '127.0.0.1';
+  createApp().listen(port, host, () => {
+    console.log(`简历 × JD 对齐 Agent 已启动: http://${host === '0.0.0.0' ? '127.0.0.1' : host}:${port}`);
   });
 }

@@ -311,6 +311,7 @@ async function importFile(field, source) {
     box.value = result.text;
     const hint = result.kind === '图片 OCR' ? '（OCR 结果请先核对再分析）' : '';
     setImportStatus(field, `已从 ${file.name} 提取 ${result.text.length} 字${hint}`, 'ok');
+    if (field === 'jd') schedulePreview();
   } catch (err) {
     if (err.message === 'SCANNED_PDF') {
       setImportStatus(field, '这份 PDF 是扫描件，没有文字层。请改用「截图识别」', 'err');
@@ -342,6 +343,7 @@ async function importUrl(field) {
       `已抓取${data.title ? `《${data.title}》` : '页面'}，提取 ${data.text.length} 字${data.truncated ? '（内容过长已截断）' : ''}`,
       'ok',
     );
+    if (field === 'jd') schedulePreview();
   } catch (err) {
     setImportStatus(field, err.message || '抓取失败', 'err');
   }
@@ -375,6 +377,61 @@ document.addEventListener('click', (e) => {
   const btn = e.target.closest('[data-urlgo]');
   if (btn) importUrl(btn.dataset.urlgo);
 });
+
+// —— 格式体检 ——
+let previewCache = [];
+let previewTimer = null;
+
+async function runPreview() {
+  const text = $('#jd').value;
+  if (!text.trim()) return;
+  try {
+    const res = await fetch('/api/preview', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ jd_text: text }),
+    });
+    const data = await res.json();
+    if (!data.ok) return;
+    renderPreview(data);
+  } catch {
+    // 体检失败不影响主流程
+  }
+}
+
+function schedulePreview() {
+  clearTimeout(previewTimer);
+  previewTimer = setTimeout(runPreview, 600);
+}
+
+function renderPreview(data) {
+  const panel = $('#preview-panel');
+  panel.hidden = false;
+  $('#previewNote').textContent = data.note;
+  previewCache = data.items;
+  $('#previewBody').innerHTML = data.items
+    .map(
+      (it) => `<div class="preview-card">
+        <h3>${data.multi ? `#${it.index + 1} ` : ''}${esc(it.title)}</h3>
+        <div class="meta">${it.chars} 字 · 能力项 ${it.core_count} · 硬门槛 ${it.hard_count}${it.nice_count ? ` · 加分项 ${it.nice_count}` : ''}</div>
+        ${it.must.length ? `<div class="chips">${it.must.map((m) => `<span class="chip must">${esc(m)}</span>`).join('')}</div>` : ''}
+        ${it.warnings.length ? `<ul class="warns">${it.warnings.map((w) => `<li>${esc(w)}</li>`).join('')}</ul>` : '<div class="meta">格式看起来没问题</div>'}
+        <button class="ghost small" data-preview-index="${it.index}">${data.multi ? '分析这个岗位' : '就按这个分析'}</button>
+      </div>`,
+    )
+    .join('');
+}
+
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-preview-index]');
+  if (!btn) return;
+  const item = previewCache[Number(btn.dataset.previewIndex)];
+  if (!item) return;
+  $('#jd').value = item.text;
+  run();
+});
+
+$('#jd').addEventListener('paste', () => setTimeout(schedulePreview, 50));
 
 // —— 用户档案 ——
 const PROFILE_KEY = 'jdpreview_profile_v1';
@@ -519,6 +576,7 @@ document.addEventListener('click', (e) => {
 // —— 事件 ——
 $('#run').addEventListener('click', run);
 $('#recBtn').addEventListener('click', recommend);
+$('#previewBtn').addEventListener('click', runPreview);
 $('#profileBtn').addEventListener('click', buildMyProfile);
 
 // 档案存在本机，刷新后仍能看到

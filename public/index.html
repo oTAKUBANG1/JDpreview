@@ -67,6 +67,7 @@
             <label class="check" title="分析过的 JD 会匿名加入岗位池，用于给其他成员推荐岗位"><input type="checkbox" id="saveJd" checked /> JD 入池</label>
             <button id="run" class="primary">开始分析 <kbd>Ctrl ↵</kbd></button>
             <button id="recBtn" class="ghost">推荐岗位</button>
+            <button id="previewBtn" class="ghost">格式体检</button>
             <button id="profileBtn" class="ghost">生成档案</button>
             <button id="sample" class="ghost">加载示例</button>
             <button id="trap" class="ghost" title="示例：JD 要求 3 年 AI 产品经验与百万 DAU，简历只有售后支持。用来检查系统是否只报告缺口、不生成编造内容">编造风险测试</button>
@@ -75,6 +76,14 @@
         </div>
         <div id="error" class="error" hidden></div>
         <div id="status" class="status" hidden></div>
+      </section>
+
+      <section id="preview-panel" class="panel preview-panel" hidden>
+        <div class="panel-head">
+          <h2>格式体检</h2>
+          <span class="hint" id="previewNote"></span>
+        </div>
+        <div id="previewBody" class="preview-body"></div>
       </section>
 
       <section id="profile-panel" class="panel profile-panel" hidden>
