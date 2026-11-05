@@ -26,6 +26,16 @@ try {
   await desktop.waitForSelector('#result:not([hidden])', { timeout: 30000 });
   await desktop.screenshot({ path: `${OUT}/shot-desktop.png` });
 
+  // 档案：生成后截图
+  await desktop.click('#profileBtn');
+  await desktop.waitForSelector('#profileBody .profile-skill', { timeout: 20000 }).catch(() => {});
+  await desktop.screenshot({ path: `${OUT}/shot-profile.png` });
+
+  // 匹配矩阵 tab
+  await desktop.click('[data-tab="matrix-tab"]');
+  await desktop.waitForSelector('#matrix table', { timeout: 10000 }).catch(() => {});
+  await desktop.screenshot({ path: `${OUT}/shot-matrix.png` });
+
   // 推荐：点一下按钮，等卡片出来再截图
   await desktop.click('#recBtn');
   await desktop.waitForSelector('#recList .rec-card', { timeout: 20000 }).catch(() => {});

@@ -156,3 +156,24 @@ test('推荐接口空简历返回 422', async () => {
     assert.equal(res.status, 422);
   });
 });
+
+test('档案接口：正常返回结构，空简历 422', async () => {
+  await withServer(async (base) => {
+    const ok = await fetch(`${base}/api/profile`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ resume_text: SAMPLE_RESUME }),
+    });
+    assert.equal(ok.status, 200);
+    const data = await ok.json();
+    assert.equal(data.profile.basics.degree, '本科');
+    assert.ok(data.profile.skills.length > 0);
+
+    const bad = await fetch(`${base}/api/profile`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ resume_text: '' }),
+    });
+    assert.equal(bad.status, 422);
+  });
+});

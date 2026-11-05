@@ -6,6 +6,7 @@ import { rewriteResume } from './rewrite.js';
 import { gate } from './gate.js';
 import { parseResume, lineRelevance } from './match.js';
 import { compareHardRequirements } from './hardGate.js';
+import { buildMatrix } from './profile.js';
 
 export const DEFAULT_MAX_ROUND = 3;
 
@@ -127,6 +128,7 @@ export function analyze(input, deps = {}) {
     score,
     conclusion,
     hard_gate: hardGate,
+    matrix: buildMatrix(jd_json, resumeText),
     impact: {
       evidence_rank_before: beforeTop3,
       evidence_rank_after: afterTop3,

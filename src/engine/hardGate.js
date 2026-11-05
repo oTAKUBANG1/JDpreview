@@ -16,7 +16,7 @@ const WORK_SECTION = /(工作|实习|实践|经历)/;
 // 「产品经理经验」是岗位本身，不是限定领域，按总年限比对即可。
 const DOMAIN_WORD = /(AI|人工智能|大模型|算法|数据|金融|医疗|电商|教育|游戏|社交|广告|供应链|B端|C端|ToB|ToC)/i;
 
-function detectDegree(text) {
+export function detectDegree(text) {
   for (const d of DEGREE_RANK) {
     if (d.pattern.test(text)) return d;
   }
@@ -24,7 +24,7 @@ function detectDegree(text) {
 }
 
 /** 从「YYYY.MM - YYYY.MM/至今」这类区间累计工作月数，只看工作/实习区块 */
-function estimateMonths(resume) {
+export function estimateMonths(resume) {
   const now = new Date();
   const nowMonths = now.getFullYear() * 12 + (now.getMonth() + 1);
   const lines = [];
@@ -61,7 +61,7 @@ function estimateMonths(resume) {
   return { months, totalMonthsNow: nowMonths };
 }
 
-function detectYears(text, resume) {
+export function detectYears(text, resume) {
   const explicit = [...text.matchAll(/(\d+)\s*年(?:以上|及以上)?\s*(?:工作|相关)?经验/g)];
   const fromPeriods = estimateMonths(resume).months / 12;
   const fromText = explicit.length ? Math.max(...explicit.map((m) => Number(m[1]))) : 0;

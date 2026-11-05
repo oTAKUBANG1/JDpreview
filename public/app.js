@@ -109,6 +109,7 @@ function render(data) {
   ].join('');
 
   renderHardGate(data.hard_gate);
+  renderMatrix(data.matrix);
 
   // 对齐版简历：把 "## 标题" 标成小标题
   const lines = String(rw.rewritten_resume || '').split('\n');
@@ -336,6 +337,76 @@ document.addEventListener('click', (e) => {
   if (btn) importUrl(btn.dataset.urlgo);
 });
 
+// —— 用户档案 ——
+const PROFILE_KEY = 'jdpreview_profile_v1';
+
+async function buildMyProfile() {
+  clearError();
+  const resume = $('#resume').value;
+  if (!resume.trim()) return showError('先在简历框里放一份简历，才能生成档案。');
+  const btn = $('#profileBtn');
+  btn.disabled = true;
+  $('#profileNote').textContent = '正在提取档案…';
+  try {
+    const res = await fetch('/api/profile', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ resume_text: resume }),
+    });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || '档案生成失败');
+    localStorage.setItem(PROFILE_KEY, JSON.stringify(data.profile));
+    renderProfile(data.profile);
+  } catch (err) {
+    showError(err.message || '档案生成失败');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function renderProfile(profile) {
+  const panel = $('#profile-panel');
+  panel.hidden = false;
+  $('#profileNote').textContent = profile.note || '';
+  const b = profile.basics ?? {};
+  const skills = profile.skills ?? [];
+  const highlights = profile.highlights ?? [];
+  $('#profileBody').innerHTML = `
+    <div class="profile-kv">
+      <span class="chip">学历：${esc(b.degree ?? '未识别')}</span>
+      <span class="chip">工作年限：约 ${esc(String(b.years_experience ?? 0))} 年</span>
+      <span class="chip">能力项：${skills.length}</span>
+      <span class="chip">量化亮点：${highlights.length}</span>
+    </div>
+    <div class="profile-skills">${skills
+      .map((s) => `<span class="profile-skill"><b>${esc(s.name)}</b><span class="n">×${s.evidence_count}</span>${s.quantified ? '<span class="chip explicit" style="padding:0 5px">有数字</span>' : ''}</span>`)
+      .join('') || '<span class="empty">简历里没识别出可归类的技能</span>'}</div>
+    ${highlights.length ? `<ul class="profile-highlights">${highlights.map((h) => `<li>${esc(h.text)}</li>`).join('')}</ul>` : ''}`;
+}
+
+function renderMatrix(matrix) {
+  const rows = matrix || [];
+  if (!rows.length) {
+    $('#matrix').innerHTML = '<p class="empty">没有能力项可匹配。</p>';
+    return;
+  }
+  const label = { evidence: '强证据', weak: '弱证据', gap: '缺口' };
+  $('#matrix').innerHTML = `<table>
+    <thead><tr><th>#</th><th>能力项</th><th>权重</th><th>级别</th><th>状态</th><th>证据</th></tr></thead>
+    <tbody>${rows
+      .map(
+        (m) => `<tr>
+          <td class="mono">${esc(m.competency_id)}</td>
+          <td>${esc(m.name)}</td>
+          <td class="mono">${m.weight}</td>
+          <td><span class="chip ${m.level === 'must' ? 'must' : ''}">${esc(m.level)}</span></td>
+          <td><span class="chip ${m.status === 'gap' ? 'major' : m.status === 'evidence' ? 'explicit' : ''}">${label[m.status] ?? esc(m.status)}</span></td>
+          <td class="hint">${m.evidence.length ? esc(m.evidence[0]) : '简历里没找到'}</td>
+        </tr>`,
+      )
+      .join('')}</tbody></table>`;
+}
+
 // —— 岗位推荐 ——
 const recCache = new Map();
 
@@ -409,6 +480,15 @@ document.addEventListener('click', (e) => {
 // —— 事件 ——
 $('#run').addEventListener('click', run);
 $('#recBtn').addEventListener('click', recommend);
+$('#profileBtn').addEventListener('click', buildMyProfile);
+
+// 档案存在本机，刷新后仍能看到
+try {
+  const saved = localStorage.getItem(PROFILE_KEY);
+  if (saved) renderProfile(JSON.parse(saved));
+} catch {
+  // 忽略损坏的本地数据
+}
 $('#clear').addEventListener('click', () => {
   $('#jd').value = '';
   $('#resume').value = '';

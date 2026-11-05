@@ -9,6 +9,7 @@ import { analyze } from './engine/pipeline.js';
 import { fetchPage } from './fetcher.js';
 import { openStore } from './store.js';
 import { recommendJobs } from './recommend.js';
+import { buildProfile } from './engine/profile.js';
 import { SAMPLE_JD, SAMPLE_RESUME, TRAP_JD, TRAP_RESUME } from './samples.js';
 
 const ROOT = resolve(fileURLToPath(new URL('../public', import.meta.url)));
@@ -76,7 +77,7 @@ export function createApp(options = {}) {
     const url = new URL(req.url ?? '/', 'http://localhost');
     try {
       if (req.method === 'GET' && url.pathname === '/api/health') {
-        return json(res, 200, { ok: true, version: '0.1.4' });
+        return json(res, 200, { ok: true, version: '0.1.5' });
       }
       if (req.method === 'GET' && url.pathname === '/api/samples') {
         return json(res, 200, {
@@ -105,6 +106,12 @@ export function createApp(options = {}) {
             paste_count: r.paste_count,
           })),
         });
+      }
+      if (req.method === 'POST' && url.pathname === '/api/profile') {
+        const body = await readBody(req);
+        const resumeText = String(body.resume_text ?? '');
+        if (!resumeText.trim()) return json(res, 422, { ok: false, error: '请先填写简历原文' });
+        return json(res, 200, { ok: true, profile: buildProfile(resumeText) });
       }
       if (req.method === 'POST' && url.pathname === '/api/recommend') {
         const body = await readBody(req);

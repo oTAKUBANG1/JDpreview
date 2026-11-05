@@ -67,6 +67,7 @@
             <label class="check" title="分析过的 JD 会匿名加入岗位池，用于给其他成员推荐岗位"><input type="checkbox" id="saveJd" checked /> JD 入池</label>
             <button id="run" class="primary">开始分析 <kbd>Ctrl ↵</kbd></button>
             <button id="recBtn" class="ghost">推荐岗位</button>
+            <button id="profileBtn" class="ghost">生成档案</button>
             <button id="sample" class="ghost">加载示例</button>
             <button id="trap" class="ghost" title="示例：JD 要求 3 年 AI 产品经验与百万 DAU，简历只有售后支持。用来检查系统是否只报告缺口、不生成编造内容">编造风险测试</button>
             <button id="clear" class="ghost">清空</button>
@@ -74,6 +75,14 @@
         </div>
         <div id="error" class="error" hidden></div>
         <div id="status" class="status" hidden></div>
+      </section>
+
+      <section id="profile-panel" class="panel profile-panel" hidden>
+        <div class="panel-head">
+          <h2>我的档案</h2>
+          <span class="hint" id="profileNote">只记录简历里写出来的事实</span>
+        </div>
+        <div id="profileBody" class="profile-body"></div>
       </section>
 
       <section id="recommend-panel" class="panel recommend-panel" hidden>
@@ -97,6 +106,7 @@
           <button class="tab" data-tab="ledger-tab">改动与证据</button>
           <button class="tab" data-tab="missing-tab">待补清单</button>
           <button class="tab" data-tab="gate-tab">校验报告</button>
+          <button class="tab" data-tab="matrix-tab">匹配矩阵</button>
           <button class="tab" data-tab="jd-tab">JD 解析</button>
         </nav>
 
@@ -125,6 +135,11 @@
         <div id="gate-tab" class="tab-panel">
           <div class="panel-head"><h2>校验报告</h2><span class="hint" id="gate-summary"></span></div>
           <div id="gate"></div>
+        </div>
+
+        <div id="matrix-tab" class="tab-panel">
+          <div class="panel-head"><h2>匹配矩阵</h2><span class="hint">JD 每个能力项 → 简历里的证据，三态可解释</span></div>
+          <div id="matrix"></div>
         </div>
 
         <div id="jd-tab" class="tab-panel">
