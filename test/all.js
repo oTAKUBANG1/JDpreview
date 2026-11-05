@@ -8,6 +8,7 @@ import './import.test.js';
 import './pool.test.js';
 import './profile.test.js';
 import './advice.test.js';
+import './realdata.test.js';
 import './gate.test.js';
 import './pipeline.test.js';
 import './server.test.js';

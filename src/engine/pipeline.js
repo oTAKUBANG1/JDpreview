@@ -54,6 +54,14 @@ export function analyze(input, deps = {}) {
   if (!resumeText.trim()) {
     return { ok: false, error: '简历内容为空', jd_json };
   }
+  // 只贴了链接/导航文字，没有一条可解析的要求：宁可报错，也不要给出「可投递」这种假结论
+  if (!jd_json.core_competencies.length && !jd_json.hard_requirements.length) {
+    return {
+      ok: false,
+      error: '没有从这段文本里解析出岗位要求，请粘贴完整的岗位职责与任职要求',
+      jd_json,
+    };
+  }
 
   let round = 0;
   let reviseInstructions = [];
@@ -108,8 +116,10 @@ export function analyze(input, deps = {}) {
   const score = gate_json.score;
 
   // 结论优先级：硬门槛不满足 > 事实问题 > 能力缺口/校验未过 > 可投
+  const hasMust = (jd_json.core_competencies ?? []).some((c) => c.level === 'must');
   let conclusion = '可投递';
-  if (hardGate.failed) conclusion = '不建议投递';
+  if (!jd_json.core_competencies.length || !hasMust) conclusion = '建议补充后投递';
+  else if (hardGate.failed) conclusion = '不建议投递';
   else if (score.fact_consistency < 100) conclusion = '不建议投递';
   else if (mustMissing.length || gate_json.verdict !== 'PASS') conclusion = '建议补充后投递';
 

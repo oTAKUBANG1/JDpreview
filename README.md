@@ -17,7 +17,7 @@ node src/server.js
 也可以直接看演示：`http://127.0.0.1:3080/?demo=1`（自动填示例并跑一遍）。
 
 ```bash
-node test/all.js   # 45 个用例
+node test/all.js   # 76 个用例（含 15 份真实简历 + 4 段真实 JD 回归）
 ```
 
 ## 导入方式

@@ -6,6 +6,10 @@ import { findCompetencies, COMPETENCIES } from './lexicon.js';
 
 // 权重来源表：标题、硬性门槛是「不满足就别投」的硬信号；任职要求次之；职责描述最弱。
 // 同一能力项重复出现、或出现在强调句里，再 +1。上限 5 是为了和源规格的 1–5 对齐。
+// 纯软性描述不该和核心能力同权：JD 里几乎都会写「沟通好、能抗压」，
+// 一旦它们进了 must，覆盖率就会被稀释成没意义的数字。
+const SOFT_ONLY = new Set(['沟通表达', '抗压能力', '学习能力', '服务意识']);
+
 function weightOf(c) {
   const hardSource = c.sources.has('title') || c.sources.has('hard');
   const base = hardSource ? 5 : c.sources.has('requirement') ? 4 : 2;
@@ -13,19 +17,21 @@ function weightOf(c) {
   if (c.mentions > 1) weight += 1;
   if (c.emphasis && base >= 4) weight += 1;
   if (base < 4 && c.firstIndex >= 0 && c.firstIndex < 3) weight += 1;
-  return Math.max(1, Math.min(5, weight));
+  weight = Math.max(1, Math.min(5, weight));
+  if (SOFT_ONLY.has(c.name)) weight = Math.min(3, weight);
+  return weight;
 }
 
 
 const NOISE_RE = /(薪资|薪酬|月薪|年薪|薪|五险|公积金|福利|补贴|年终奖|期权|股权|弹性工作|双休|大小周|团建|下午茶|零食|办公地点|工作地点|上班地点|公司地址|地铁|邮箱|简历投递|投递简历|简历请|创始人|融资|天使轮|A轮|B轮|C轮|D轮|上市公司|我们是一家|公司简介|关于我们|团队规模|公司规模|招聘流程|面试流程|年假|带薪|餐补|房补|交通补|节日|生日|体检)/;
-const LABEL_RE = /^(岗位职责|工作职责|职位描述|工作内容|你将负责|你将会|负责内容|任职要求|岗位要求|任职资格|职位要求|我们希望你|希望你|你需要|加分项|优先条件|加分)[:：]?$/;
+const LABEL_RE = /^(岗位职责|工作职责|职位描述|工作内容|你将负责|你将会|负责内容|任职要求|岗位要求|任职资格|职位要求|我们希望你|希望你|你需要|加分项|优先条件|加分|we(?:'| a)?re looking for|requirements?|responsibilities|what you(?:'| w)ll do|qualifications|nice to have|about you)[:：]?$/i;
 const DUTY_LABEL_RE = /职责|工作内容|你将|负责内容|职位描述/;
 const BONUS_LABEL_RE = /加分|优先/;
 
 const HARD_RE = /(本科|硕士|博士|大专|统招|全日制|985|211|双一流|\d+\s*年(以上|及以上)|[一二两三四五六七八九十]+\s*年(以上|及以上)|必须|仅限|至少|需具备|须具备|要求具备|持有|证书|CET-?[46]|雅思|托福|英语(四|六)级)/;
 const NICE_RE = /(优先|加分|更佳|更好|为佳|了解即可|锦上添花|者优先|有…?者优先)/;
 const EMPHASIS_RE = /(核心|重点|关键|必须|主导|独立负责|从0到1|从 0 到 1)/;
-const ACTION_RE = /(负责|参与|推动|设计|制定|搭建|运营|分析|输出|管理|优化|落地|协同|推进|迭代|产出|建设|规划|跟进|维护|对接|熟悉|掌握|精通|具备|使用|有.{0,8}经验)/;
+const ACTION_RE = /(负责|参与|推动|设计|制定|搭建|运营|分析|输出|管理|优化|落地|协同|推进|迭代|产出|建设|规划|跟进|维护|对接|熟悉|掌握|精通|具备|使用|承担|提供|挖掘|支持|把握|调整|有.{0,8}经验)/;
 const LEVEL_RE = /(实习|应届|校招|初级|助理|高级|资深|专家|总监|负责人|主管)/;
 const TITLE_RE = /(产品|运营|数据|算法|研发|开发|测试|设计|市场|销售|人力|财务|项目|增长|战略|商务|内容|用户研究|交互|视觉|前端|后端|全栈)[^\s，。；]{0,6}(经理|专员|总监|主管|工程师|架构师|分析师|助理|专家)/;
 
@@ -186,9 +192,15 @@ export function parseJD(jdText, targetRole = '') {
     .map((c) => ({ ...c, weight: weightOf(c) }))
     .sort((a, b) => b.weight - a.weight || a.firstIndex - b.firstIndex);
 
-  // must 级：weight ≥ 4（标题/硬门槛/任职要求）；JD 没任何强调时兜底取前 3
+  // must 级：weight ≥ 4（标题/硬门槛/任职要求）；JD 没任何强调时兜底取前 3，
+  // 但纯软性描述不配当 must，否则「沟通好、能抗压」会占满覆盖率。
   let mustNames = competencies.filter((c) => c.weight >= 4).map((c) => c.name);
-  if (!mustNames.length) mustNames = competencies.slice(0, 3).map((c) => c.name);
+  if (!mustNames.length) {
+    mustNames = competencies
+      .filter((c) => !SOFT_ONLY.has(c.name))
+      .slice(0, 3)
+      .map((c) => c.name);
+  }
 
   const core = competencies.map((c, i) => ({
     id: ID('C', i + 1),

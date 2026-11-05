@@ -77,7 +77,7 @@ export function createApp(options = {}) {
     const url = new URL(req.url ?? '/', 'http://localhost');
     try {
       if (req.method === 'GET' && url.pathname === '/api/health') {
-        return json(res, 200, { ok: true, version: '0.1.6' });
+        return json(res, 200, { ok: true, version: '0.1.7' });
       }
       if (req.method === 'GET' && url.pathname === '/api/samples') {
         return json(res, 200, {

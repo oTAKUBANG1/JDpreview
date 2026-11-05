@@ -30,7 +30,25 @@ export function splitUnits(text) {
       units.push(line);
     }
   }
-  return units;
+  // 招聘网站复制出来的 JD 常在词中间断行（「重\n点网络项目」「经验\n者优先」）。
+  // 只接「明显被折断的长句 / 编号条目」；短标签（市场调研、本科、感兴趣）和页脚一律不接，
+  // 否则整个头部会被拼成一坨，岗位职责标签也跟着丢。
+  const merged = [];
+  const NEXT_ITEM = /^(\d{1,2}[.、)]|[（(]\d{1,2}[)）]|[一二三四五六七八九十]+[、.]|[-•])/;
+  const NEXT_JUNK = /^(丰女士|微信|收藏|举报|立即沟通|感兴趣|不合适|招聘中|刚刚活跃|职位描述|岗位职责|任职要求|岗位要求|公司介绍)/;
+  for (const unit of units) {
+    const prev = merged[merged.length - 1];
+    const looksWrapped =
+      prev &&
+      !/[。；;！？!?：:]$/.test(prev) &&
+      (prev.length > 30 || /^\d{1,2}[、.]/.test(prev));
+    if (looksWrapped && prev.length < 160 && unit.length > 2 && !NEXT_ITEM.test(unit) && !NEXT_JUNK.test(unit)) {
+      merged[merged.length - 1] = `${prev}${unit}`;
+    } else {
+      merged.push(unit);
+    }
+  }
+  return merged;
 }
 
 export function stripBullet(line) {

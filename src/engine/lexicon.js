@@ -59,7 +59,7 @@ export const COMPETENCIES = [
   { name: '架构设计', aliases: ['系统设计', '技术方案', '技术选型'], group: '技术' },
   { name: '软件测试', aliases: ['测试用例', '功能测试', '接口测试'], group: '技术' },
   { name: '自动化测试', aliases: ['自动化', 'UI自动化', '自动化脚本'], group: '技术' },
-  { name: 'DevOps', aliases: ['CI/CD', '持续集成', '运维', '部署'], group: '技术' },
+  { name: 'DevOps', aliases: ['CI/CD', '持续集成', 'DevOps', '自动化部署'], group: '技术' },
   { name: 'Linux', aliases: ['linux', 'Shell', 'shell脚本'], group: '技术' },
   { name: 'Git', aliases: ['git', '版本控制'], group: '技术' },
   { name: '敏捷开发', aliases: ['Scrum', '敏捷', '迭代管理'], group: '通用' },
@@ -81,7 +81,26 @@ export const COMPETENCIES = [
   { name: '社交', aliases: ['社区', '内容社区'], group: '行业' },
   { name: '广告', aliases: ['广告投放', '投放', '商业化广告'], group: '行业' },
   { name: '供应链', aliases: ['供应链管理', '仓配'], group: '行业' },
-  { name: '客服', aliases: ['客户服务', '售后', '工单'], group: '行业' },
+  { name: '客服', aliases: ['工单', '客服'], group: '行业' },
+  { name: '服务意识', aliases: ['客户服务意识', '服务意识', '客户满意度'], group: '通用' },
+  // —— 网络 / 技术支持 / 售前 ——
+  { name: '网络工程', aliases: ['数通', '路由器', '交换机', '防火墙', 'TCP/IP', 'WLAN', '无线组网', '组网', '网络调优', 'AC/AP'], group: '技术' },
+  { name: '网络排障', aliases: ['排障', '故障排查', '故障处理', '根因分析', '根因复盘', '问题定位'], group: '技术' },
+  { name: '售后支持', aliases: ['售后', '技术支持', '售后支持', '现场实施', '客户支持'], group: '通用' },
+  { name: '网络认证', aliases: ['HCIA', 'HCIP', 'HCIE', 'CCNA', 'CCNP'], group: '技术' },
+  { name: '知识库', aliases: ['知识库', '排障手册', '案例库', '文档沉淀', '技术文档'], group: '通用' },
+  { name: '技术培训', aliases: ['技术培训', '培训赋能', '赋能', '技术分享', '授课'], group: '通用' },
+  { name: '售前支持', aliases: ['售前', '售前技术', '售前方案', '技术方案支持'], group: '产品' },
+  { name: '招投标', aliases: ['招投标', '投标', '招标', '标书'], group: '通用' },
+  { name: '商务谈判', aliases: ['商务谈判', '客户开拓', '市场开拓', '商务拓展'], group: '通用' },
+  { name: '业务拓展', aliases: ['新业务', '业务开拓', '商业机会', '销售策略', 'BD', '渠道拓展'], group: '通用' },
+  { name: '市场调研', aliases: ['市场研究', '市场分析', '行业研究', '市场洞察'], group: '产品' },
+  // —— IT 审计 / 合规 ——
+  { name: 'IT审计', aliases: ['IT Audit', '信息系统审计', 'IT审计', '鉴证'], group: '行业' },
+  { name: '合规风控', aliases: ['合规', '风控', '内控', '风险控制'], group: '行业' },
+  { name: '信息安全', aliases: ['CISSP', 'CISA', '信息安全', '等保'], group: '技术' },
+  { name: 'Excel', aliases: ['excel'], group: '技术' },
+  { name: '数据可视化', aliases: ['Tableau', 'Power BI', 'PowerBI', '可视化', '数据看板'], group: '数据' },
 ];
 
 // 建索引：term(小写) -> { name, group }

@@ -110,6 +110,8 @@ export function compareHardRequirements(resumeText, jdJson) {
 
       const yearMatch = clause.match(/(\d+)\s*年(以上|及以上)?/);
       if (!yearMatch) continue;
+      // 「经验不限 / 零基础可培养」里的年限只是描述，不是门槛
+      if (/经验不限|可培养|零基础|不限经验/.test(clause)) continue;
       const yearNeed = Number(yearMatch[1]);
       const domainCapture = clause.match(/\d+\s*年(?:以上)?\s*([^，。；]{0,12}?)经验/);
       const domainText = domainCapture?.[1] ?? '';
