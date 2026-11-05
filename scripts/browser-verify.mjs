@@ -36,6 +36,29 @@ try {
   await desktop.waitForSelector('#matrix table', { timeout: 10000 }).catch(() => {});
   await desktop.screenshot({ path: `${OUT}/shot-matrix.png` });
 
+  // 截图按钮：清空 JD，走真实上传路径（验证 data-image 监听是否接上）
+  await desktop.evaluate(() => {
+    document.getElementById('jd').value = '';
+  });
+  desktop.on('dialog', (d) => d.accept());
+  const imageInput = await desktop.$('input[data-image="jd"]');
+  await imageInput.uploadFile('tmp/fixture-jd.png');
+  await desktop
+    .waitForFunction(() => document.querySelector('[data-status="jd"]').className.includes('ok'), { timeout: 120000 })
+    .catch(() => {});
+  const uploadResult = await desktop.evaluate(() => ({
+    status: document.querySelector('[data-status="jd"]').textContent,
+    chars: document.getElementById('jd').value.length,
+    head: document.getElementById('jd').value.slice(0, 40),
+  }));
+  console.log('upload:', JSON.stringify(uploadResult));
+  await desktop.screenshot({ path: `${OUT}/shot-ocr-upload.png` });
+
+  await desktop.click('[data-tab="missing-tab"]');
+  await desktop.evaluate(() => document.querySelector('.advice-block')?.scrollIntoView({ block: 'start' }));
+  await new Promise((r) => setTimeout(r, 300));
+  await desktop.screenshot({ path: `${OUT}/shot-advice.png` });
+
   // 推荐：点一下按钮，等卡片出来再截图
   await desktop.click('#recBtn');
   await desktop.waitForSelector('#recList .rec-card', { timeout: 20000 }).catch(() => {});

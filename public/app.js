@@ -122,7 +122,7 @@ function render(data) {
   $('#impact').setAttribute('data-copy-target', '#rewritten');
 
   renderLedger(rw);
-  renderMissing(rw);
+  renderMissing(rw, data.advice);
   renderGate(gate, meta);
   renderJd(jd);
   const hash = location.hash.replace('#', '');
@@ -171,7 +171,7 @@ function renderLedger(rw) {
   }
 }
 
-function renderMissing(rw) {
+function renderMissing(rw, advice) {
   const items = rw.missing_items || [];
   if (!items.length) {
     $('#missing').innerHTML = '<p class="empty">JD 里的能力项都在简历里找到依据了。</p>';
@@ -189,6 +189,25 @@ function renderMissing(rw) {
         )
         .join('')}</tbody></table>`;
   }
+
+  const adviceItems = advice?.items ?? [];
+  const niceItems = advice?.nice ?? [];
+  const adviceHtml = adviceItems.length
+    ? `<div class="advice-block"><h3 class="hint">改进方向（针对缺口，不是让你编）</h3>${adviceItems
+        .map(
+          (a) => `<div class="advice">
+            <div class="advice-head">${esc(a.competency_name)}<span class="chip ${a.priority === 'must' ? 'must' : ''}">${esc(a.priority)} · ${esc(a.resume_status)}</span></div>
+            <ul>${a.tips.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>
+          </div>`,
+        )
+        .join('')}</div>`
+    : '';
+  const niceHtml = niceItems.length
+    ? `<div class="advice-block"><h3 class="hint">加分项（不是硬缺口，别硬凑）</h3>${niceItems
+        .map((n) => `<div class="advice"><div class="advice-head">${esc(n.text)}</div><ul><li>${esc(n.tip)}</li></ul></div>`)
+        .join('')}</div>`
+    : '';
+  $('#missing').insertAdjacentHTML('beforeend', adviceHtml + niceHtml);
 
   const qs = rw.questions_for_user || [];
   $('#questions').innerHTML = qs.length
@@ -272,9 +291,9 @@ function setImportStatus(field, text, kind = '') {
   el.className = `import-status ${kind}`;
 }
 
-async function importFile(field, input) {
-  const file = input.files?.[0];
-  input.value = '';
+async function importFile(field, source) {
+  const file = source instanceof File ? source : source.files?.[0];
+  if (!(source instanceof File)) source.value = '';
   if (!file) return;
   const box = document.getElementById(field);
   if (file.size > 20 * 1024 * 1024) {
@@ -331,7 +350,27 @@ async function importUrl(field) {
 document.addEventListener('change', (e) => {
   const el = e.target;
   if (el.dataset?.file) importFile(el.dataset.file, el);
+  if (el.dataset?.image) importFile(el.dataset.image, el);
 });
+
+// 截图直接 Ctrl+V 粘进 JD 框
+$('#jd').addEventListener('paste', (e) => {
+  const imageItem = [...(e.clipboardData?.items ?? [])].find((i) => i.type.startsWith('image/'));
+  if (!imageItem) return;
+  e.preventDefault();
+  const file = imageItem.getAsFile();
+  if (file) importFile('jd', file);
+});
+
+// 也可以把图片/文件拖进 JD 框
+$('#jd').addEventListener('dragover', (e) => e.preventDefault());
+$('#jd').addEventListener('drop', (e) => {
+  const file = [...(e.dataTransfer?.files ?? [])][0];
+  if (!file) return;
+  e.preventDefault();
+  importFile('jd', file);
+});
+
 document.addEventListener('click', (e) => {
   const btn = e.target.closest('[data-urlgo]');
   if (btn) importUrl(btn.dataset.urlgo);

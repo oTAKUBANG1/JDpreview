@@ -1,0 +1,80 @@
+// 改进建议：把「缺什么」翻译成「下一步做什么」。
+// 规则版只能给方向，不给编造的话术——所以建议里不出现任何可以直接粘进简历的句子。
+
+import { COMPETENCIES } from './lexicon.js';
+
+const GROUP_TIPS = {
+  AI: '做一个小作品：用大模型/Agent 解决一个真实小问题，记录方案、评估方式和踩坑，写进项目经历。',
+  游戏: '平台经验可以迁移：分发、供需匹配、商业化、生态治理。没有游戏经历就拆解一款小游戏的留存与付费设计，写成分析稿。',
+  社交: '把社区 / UGC / 用户增长的可迁移经历写出来；没有就做一次社群冷启动或内容运营的小案例。',
+  数据: '用公开数据做一次完整分析（问题 → 口径 → 结论 → 建议），把过程和结论写进项目。',
+  技术: '做一个小项目并开源或写复盘，比在技能栏列技术名词有用。',
+  产品: '选一个你熟悉的行业做竞品拆解或产品方案，产出可展示的文档。',
+  运营: '选一个你熟悉的品类做一次运营方案（拉新或留存），把指标和结果写出来。',
+  行业: '把行业理解落到产出上：一份行业分析、竞品拆解或解决方案，而不是只写「了解」。',
+  通用: '找一段最接近的经历，用「场景 - 动作 - 结果」重写；确实没有就用 1–2 周补一个小项目。',
+};
+
+function groupOf(name) {
+  return COMPETENCIES.find((c) => c.name === name)?.group ?? '通用';
+}
+
+const COMPETENCY_TIPS = {
+  大模型: '拿一个真实场景做原型：输入输出、失败案例、成本与延迟都记下来，重点写你怎么评估效果。',
+  Prompt工程: '沉淀 10 条以上可复用的提示词模板，记录迭代前后的效果差异，比写「熟悉」有说服力。',
+  RAG: '做一个检索增强的小项目：文档切分、召回率、引用准确率，把指标和失败案例写清楚。',
+  AI产品: '把 AI 能力映射到具体业务场景：用户是谁、流程怎么变、效果怎么评估、边界在哪。',
+  平台生态: '写开放平台或生态合作的案例：伙伴分层、准入规则、分成机制、治理手段。',
+  游戏: '平台经验可迁移：分发、供需匹配、商业化、生态治理。没有游戏经历就拆解一款小游戏的留存与付费设计。',
+  社交: '把社区 / UGC / 用户增长的可迁移经历写出来；没有就做一次社群冷启动或内容运营的小案例。',
+  数据分析: '用公开数据做一次完整分析（问题 → 口径 → 结论 → 建议），把过程和结论写进项目。',
+  SQL: '写清楚你用 SQL 解决过什么业务问题（查什么、为什么查、结论怎么用），别只写「熟练」。',
+};
+
+function tipsFor(item) {
+  const group = groupOf(item.competency_name);
+  const specific = COMPETENCY_TIPS[item.competency_name];
+  if (item.resume_status === '有经历但缺少量化') {
+    if (group === '通用') {
+      return [
+        '软技能别报数字，用一次具体协作案例证明：涉及谁、分歧是什么、你做了什么、结果如何。',
+        '把它挪到对应项目的第一句，让 HR 先看到结果而不是职责。',
+      ];
+    }
+    return [
+      '给这条补一个结果数字：覆盖多少用户、提升/节省多少、周期多长；没有精确值就写区间或「约」，别编。',
+      '把它挪到对应项目的第一句，让 HR 先看到结果而不是职责。',
+    ];
+  }
+  if (item.priority === 'should' || item.priority === 'nice') {
+    return [
+      '这是加分项，不必硬补；有相关经历就写，没有别硬塞。',
+      specific ?? GROUP_TIPS[group] ?? GROUP_TIPS.通用,
+    ];
+  }
+  return [
+    '不要硬写进简历。先找最接近的一段经历，按「场景 - 动作 - 结果」重写；确实没有，就用小项目补，写进项目经历。',
+    specific ?? GROUP_TIPS[group] ?? GROUP_TIPS.通用,
+  ];
+}
+
+function niceTip(text) {
+  if (/(兴趣|热爱|关注|看好|感兴趣)/.test(text)) {
+    return '兴趣要变成证据：列 2–3 个你真的用过的相关产品，加一个自己做的小实验或分析，写在自我评价或项目里。';
+  }
+  return '加分项，有就写具体经历，没有不必硬凑；别把「优先」当成「必须」。';
+}
+
+export function buildAdvice(missingItems = [], jdJson = {}) {
+  const items = missingItems.map((item) => ({
+    competency_name: item.competency_name,
+    priority: item.priority,
+    resume_status: item.resume_status,
+    tips: [...new Set(tipsFor(item))],
+  }));
+  const nice = (jdJson.nice_to_have ?? []).map((n) => ({
+    text: n.jd_quote || n.text,
+    tip: niceTip(n.text ?? ''),
+  }));
+  return { items, nice };
+}

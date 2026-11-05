@@ -207,6 +207,25 @@ select option { background: #0a1220; }
 .profile-highlights { margin: 0; padding-left: 18px; color: var(--muted); font-size: 12.5px; }
 .profile-highlights li { margin-bottom: 4px; }
 
+/* —— 改进建议 —— */
+.advice-block { margin-top: 18px; }
+.advice {
+  border-left: 2px solid var(--accent);
+  background: rgba(79, 209, 197, 0.04);
+  padding: 8px 14px;
+  border-radius: 0 8px 8px 0;
+  margin-bottom: 8px;
+}
+.advice-head {
+  font-size: 13.5px;
+  color: var(--text);
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.advice ul { margin: 6px 0 0; padding-left: 18px; color: var(--muted); font-size: 12.5px; line-height: 1.8; }
+
 .controls { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; }
 .control { display: flex; flex-direction: column; gap: 6px; min-width: 180px; }
 .control select, .control input[type="number"] { min-width: 220px; }

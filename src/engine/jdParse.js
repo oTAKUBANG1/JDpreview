@@ -27,7 +27,7 @@ const NICE_RE = /(优先|加分|更佳|更好|为佳|了解即可|锦上添花|�
 const EMPHASIS_RE = /(核心|重点|关键|必须|主导|独立负责|从0到1|从 0 到 1)/;
 const ACTION_RE = /(负责|参与|推动|设计|制定|搭建|运营|分析|输出|管理|优化|落地|协同|推进|迭代|产出|建设|规划|跟进|维护|对接|熟悉|掌握|精通|具备|使用|有.{0,8}经验)/;
 const LEVEL_RE = /(实习|应届|校招|初级|助理|高级|资深|专家|总监|负责人|主管)/;
-const TITLE_RE = /(产品|运营|数据|算法|研发|开发|测试|设计|市场|销售|人力|财务|项目|增长|战略|商务|内容|用户研究|交互|视觉|前端|后端|全栈)[^\s，。；]{0,6}(经理|专员|总监|主管|工程师|架构师|分析师|助理|专家)?/;
+const TITLE_RE = /(产品|运营|数据|算法|研发|开发|测试|设计|市场|销售|人力|财务|项目|增长|战略|商务|内容|用户研究|交互|视觉|前端|后端|全栈)[^\s，。；]{0,6}(经理|专员|总监|主管|工程师|架构师|分析师|助理|专家)/;
 
 const ID = (prefix, n) => `${prefix}${String(n).padStart(2, '0')}`;
 
@@ -50,9 +50,15 @@ function detectRole(units, targetRole) {
     return { title, level: (title.match(LEVEL_RE) ?? [''])[0], domain: '', one_line: '' };
   }
   for (const unit of units.slice(0, 3)) {
-    // 第一行往往就是「AI 产品经理（大模型应用方向）」这种岗位名，优先整行取用
+    // 第一行往往就是「AI 产品经理（大模型应用方向）」这种岗位名，优先整行取用。
+    // 注意排除以动词开头的职责句，否则「负责小游戏平台的产品规划与运营」会被当成岗位名。
     const head = unit.split(/[（(|｜]/)[0].trim();
-    if (head.length >= 2 && head.length <= 24 && /(经理|工程师|专员|总监|主管|分析师|架构师|设计师|运营|研究员)/.test(head) && !/负责|参与|要求/.test(head)) {
+    if (
+      head.length >= 2 &&
+      head.length <= 24 &&
+      !/^(负责|参与|推动|设计|搭建|主导|协助|制定)/.test(head) &&
+      /(经理|工程师|专员|总监|主管|分析师|架构师|设计师|研究员)/.test(head)
+    ) {
       return { title: head, level: (head.match(LEVEL_RE) ?? [''])[0], domain: '', one_line: clip(unit, 50) };
     }
   }
@@ -89,8 +95,9 @@ export function parseJD(jdText, targetRole = '') {
   let mode = 'duty';
   let noiseCount = 0;
 
-  // 岗位名称本身就是最强的需求信号：「AI 产品经理」意味着 AI 产品是核心项
-  const titleHits = findCompetencies(`${role.title} ${role.one_line}`.trim());
+  // 岗位名称本身就是最强的需求信号：「AI 产品经理」意味着 AI 产品是核心项。
+  // 只从 title 取，不把 one_line（可能是职责句）拼进来，否则职责里的词会被当成岗位核心。
+  const titleHits = findCompetencies(role.title);
   for (const hit of titleHits) {
     competencyMap.set(hit.name, {
       name: hit.name,
@@ -118,7 +125,11 @@ export function parseJD(jdText, targetRole = '') {
       return;
     }
 
-    const isBonus = mode === 'bonus' || NICE_RE.test(unit);
+    const isBonus =
+      mode === 'bonus' ||
+      NICE_RE.test(unit) ||
+      // 「对 AI 应用场景有浓厚兴趣」是意向，不是经历要求；没有「经验」二字就别当门槛
+      (/(浓厚兴趣|感兴趣|热爱|关注|看好)/.test(unit) && !/经验/.test(unit));
     const isHard = !isBonus && HARD_RE.test(unit);
     const hits = findCompetencies(unit);
 
