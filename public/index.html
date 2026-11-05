@@ -13,7 +13,7 @@
         <span class="logo">◎</span>
         <div>
           <h1>简历 × JD 对齐 Agent</h1>
-          <p class="tagline">先判断能不能投，再告诉你怎么对齐 —— 每一处改动都能追到原文</p>
+          <p class="tagline">判断这份岗位值不值得投，并把简历里已有的事实对齐到 JD 上，每处改动都能回到原文核对</p>
         </div>
       </div>
       <div class="topbar-meta">
@@ -26,11 +26,11 @@
       <section class="panel input-panel">
         <div class="field">
           <label for="jd">目标岗位 JD</label>
-          <textarea id="jd" spellcheck="false" placeholder="把招聘 JD 原文整段粘进来（含任职要求）。没有 JD 原文就没法对齐，也别指望我猜。"></textarea>
+          <textarea id="jd" spellcheck="false" placeholder="粘贴目标岗位 JD 原文，建议包含岗位职责与任职要求。"></textarea>
         </div>
         <div class="field">
           <label for="resume">原始简历</label>
-          <textarea id="resume" spellcheck="false" placeholder="粘贴简历纯文本。全程只读 —— 改写稿里不会出现这里没有的事实。"></textarea>
+          <textarea id="resume" spellcheck="false" placeholder="粘贴简历纯文本。分析全程只读原文，不会新增简历里没有的经历。"></textarea>
         </div>
 
         <div class="controls">
@@ -53,7 +53,7 @@
           <div class="control actions">
             <button id="run" class="primary">开始分析 <kbd>Ctrl ↵</kbd></button>
             <button id="sample" class="ghost">加载示例</button>
-            <button id="trap" class="ghost" title="JD 要 3 年 AI 产品 + 百万 DAU，简历只有售后支持 —— 用来验证它敢不敢编">诱导编造测试</button>
+            <button id="trap" class="ghost" title="示例：JD 要求 3 年 AI 产品经验与百万 DAU，简历只有售后支持。用来检查系统是否只报告缺口、不生成编造内容">编造风险测试</button>
             <button id="clear" class="ghost">清空</button>
           </div>
         </div>
@@ -93,7 +93,7 @@
 
         <div id="missing-tab" class="tab-panel">
           <div class="panel-head"><h2>待补充清单</h2><button class="ghost small" data-copy="#questions">复制问题</button></div>
-          <p class="hint">这些是 JD 要、简历里没有的东西。我没替你编，也不会替你编。</p>
+          <p class="hint">以下要求未在简历中找到依据。系统不会把这些内容写入改写稿，请补充确认后再投递。</p>
           <div id="missing"></div>
           <div id="questions" class="questions"></div>
           <div id="irrelevant" class="irrelevant"></div>
@@ -112,8 +112,8 @@
     </main>
 
     <footer>
-      <span>MVP v0.1 · 规则引擎离线运行</span>
-      <span>设计底线：缺失不编造，改写必留痕</span>
+      <span>缺失不编造 · 改动可溯源 · 本地运行</span>
+      <span>v0.1 · 规则引擎</span>
     </footer>
 
     <script type="module" src="/app.js"></script>

@@ -20,6 +20,9 @@
 
 * { box-sizing: border-box; }
 
+/* 作者样式里的 display 会盖掉 [hidden] 的 UA 规则，导致空结果面板在首屏就露出来 */
+[hidden] { display: none !important; }
+
 html, body { margin: 0; padding: 0; }
 
 body {

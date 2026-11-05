@@ -36,8 +36,8 @@ async function run() {
   clearError();
   const jd = $('#jd').value;
   const resume = $('#resume').value;
-  if (!jd.trim()) return showError('先粘一段 JD —— 没有目标岗位就没法对齐。');
-  if (!resume.trim()) return showError('再粘一段简历原文。');
+  if (!jd.trim()) return showError('请先填写目标岗位 JD。');
+  if (!resume.trim()) return showError('请再填写简历原文。');
   setBusy(true, '解析 JD、找证据、跑闸门…');
   try {
     const res = await fetch('/api/analyze', {
@@ -88,7 +88,7 @@ function render(data) {
   const notes = [];
   if (score.fact_consistency < 100) notes.push('事实一致率未达 100，存在无依据改动（已回退或需人工确认）');
   if (mustMissing) notes.push(`${mustMissing} 项 must 级要求在简历里找不到依据，先补再投`);
-  if (!notes.length) notes.push('没有发现无依据内容；证据已前置，可按需微调措辞');
+  if (!notes.length) notes.push('未发现无依据改动；相关证据已按 JD 权重前置，可按需调整措辞');
   if (!meta.converged) notes.push(`校验 ${meta.rounds} 轮未收敛，已强制结束`);
   $('#verdict-note').textContent = notes.join('；');
 
@@ -123,7 +123,7 @@ function render(data) {
 function renderLedger(rw) {
   const rows = (rw.fact_ledger || []).filter((e) => e.change_type !== 'missing');
   if (!rows.length) {
-    $('#ledger').innerHTML = `<p class="empty">本次没有文字改动。${rw.rewritten_resume ? '简历与 JD 的能力项顺序已一致，或当前强度为 strict（只重排、不动字）。' : ''}</p>`;
+    $('#ledger').innerHTML = `<p class="empty">本次没有文字层面的改动。${rw.rewritten_resume ? '简历条目顺序已与目标岗位的能力权重一致，或当前强度为 strict（仅重排、不改字）。' : ''}</p>`;
   } else {
     $('#ledger').innerHTML = `<table>
       <thead><tr><th>编号</th><th>对应 JD 能力项</th><th>原文 → 改写</th><th>事实依据</th><th>类型</th></tr></thead>
@@ -162,7 +162,7 @@ function renderMissing(rw) {
 
   const qs = rw.questions_for_user || [];
   $('#questions').innerHTML = qs.length
-    ? `<h3 class="hint" style="margin:0 0 8px">需要你回答的问题</h3>${qs.map((q) => `<div class="question">${esc(q)}</div>`).join('')}`
+    ? `<h3 class="hint" style="margin:0 0 8px">待确认问题</h3>${qs.map((q) => `<div class="question">${esc(q)}</div>`).join('')}`
     : '';
   $('#questions').dataset.copy = qs.join('\n');
 
